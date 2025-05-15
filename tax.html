@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>세금계산서 관리</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9fafb;
+      color: #111827;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul li {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>세금계산서 관리</h1>
+
+  <section>
+    <input type="date" id="taxDate" />
+    <input type="text" id="taxCompany" placeholder="거래처명" />
+    <input type="number" id="supplyAmount" placeholder="공급가액" />
+    <input type="number" id="taxAmount" placeholder="세액" />
+    <input type="text" id="taxMemo" placeholder="메모 (선택)" />
+    <button onclick="addTaxEntry()">세금계산서 추가</button>
+  </section>
+
+  <section>
+    <h2>기록 목록</h2>
+    <ul id="taxList"></ul>
+  </section>
+
+  <script src="tax.js"></script>
+</body>
+</html>
