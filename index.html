@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>1인 사업자 가계부</title>
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+--main-color: #1f2937;
+--accent-color: #3b82f6;
+--bg-color: #f9fafb;
+--text-color: #111827;
+--border-radius: 12px;
+--box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+--max-width: 500px;
+}
+  body {
+  margin: 0;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--main-color);
+}
+
+section {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: var(--max-width);
+}
+
+.input-form input,
+.input-form select {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+}
+
+button {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+button:hover {
+  background-color: #2563eb;
+}
+
+ul#recordList {
+  list-style: none;
+  padding: 0;
+}
+
+ul#recordList li {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+  </style>
+</head>
+<body>
+<h1>1인 사업자 가계부</h1>
+
+<section class="input-form">
+<h2>지출/수입 입력</h2>
+<input type="date" id="date" />
+<input type="text" id="category" placeholder="항목 (예: 식비, 매출 등)" />
+<input type="number" id="amount" placeholder="금액" />
+<select id="type">
+<option value="income">수입</option>
+<option value="expense">지출</option>
+</select>
+<input type="text" id="memo" placeholder="메모 (선택)" />
+<button onclick="addEntry()">추가하기</button>
+</section>
+
+<section class="chart-section">
+<h2>월별 요약 차트</h2>
+<canvas id="summaryChart" height="100"></canvas>
+</section>
+
+<section class="list-section">
+<h2>기록 목록</h2>
+<ul id="recordList"></ul>
+</section>
+
+<section class="tax-section">
+<h2>세금계산서 관리</h2>
+<input type="date" id="taxDate" />
+<input type="text" id="taxCompany" placeholder="거래처명" />
+<input type="number" id="supplyAmount" placeholder="공급가액" />
+<input type="number" id="taxAmount" placeholder="세액" />
+<input type="text" id="taxMemo" placeholder="메모 (선택)" />
+<button onclick="addTaxEntry()">세금계산서 추가</button>
+<ul id="taxList"></ul>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
