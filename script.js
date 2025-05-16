@@ -331,3 +331,31 @@ window.toggleBizTypeInput = function(sel) {
 
 // ========== onload 등 기타 ==========
 // (네 index.html에서 onload에 아래들 호출해주면 끝)
+
+// 로그인
+document.getElementById('googleLoginBtn').onclick = function() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider)
+    .then(result => {
+      const user = result.user;
+      document.getElementById('userEmail').textContent = user.email + " 로그인됨!";
+    })
+    .catch(error => alert("로그인 실패: " + error.message));
+};
+// 로그아웃
+document.getElementById('logoutBtn').onclick = function() {
+  auth.signOut();
+};
+// 로그인 상태 감지
+auth.onAuthStateChanged(user => {
+  if(user) {
+    document.getElementById('googleLoginBtn').style.display = "none";
+    document.getElementById('logoutBtn').style.display = "";
+    document.getElementById('userEmail').textContent = user.email + " 로그인됨!";
+  } else {
+    document.getElementById('googleLoginBtn').style.display = "";
+    document.getElementById('logoutBtn').style.display = "none";
+    document.getElementById('userEmail').textContent = "";
+  }
+});
+
