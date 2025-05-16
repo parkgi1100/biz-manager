@@ -23,7 +23,7 @@ function loginSuccess(email) {
   closeLoginPopup();
 }
 
-// --- Firebase 초기화 (복사해온 config로 바꿔줘!) ---
+// --- Firebase 초기화 ---
 const firebaseConfig = {
   apiKey: "AIzaSyARw0VFLjUmCiNLODfBqL81ktyC4kdZOCk",
   authDomain: "biz-manager-68be3.firebaseapp.com",
@@ -50,7 +50,7 @@ window.addEntry = function(event) {
   entries.push({ date, type, amount, category, memo });
   saveEntries();
   renderInputTabList();
-  renderAll && renderAll();
+  if (typeof renderAll === "function") renderAll();
   event.target.reset();
 };
 // 거래입력(최근거래)
@@ -103,7 +103,7 @@ function renderDetailTrans() {
   }
   const filtered = filterTrans(all, from, to);
   const sum = summarizeTrans(filtered);
-  renderTransSummary(sum); // ← 세로정렬 함수로 변경
+  renderTransSummary(sum);
   const ul = document.getElementById('detailTransList');
   ul.innerHTML = '';
   filtered.forEach(e => {
@@ -207,7 +207,7 @@ function renderTaxDetail() {
   }
   const filtered = filterTax(all, from, to);
   const sum = summarizeTax(filtered);
-  renderTaxSummary(sum); // ← 세로정렬 함수로 변경
+  renderTaxSummary(sum);
   const ul = document.getElementById('taxDetailList');
   ul.innerHTML = '';
   filtered.forEach(e => {
@@ -249,23 +249,13 @@ window.exportTaxDetail = function() {
   URL.revokeObjectURL(url);
 };
 // ========== 종합소득세 제출서류(내보내기) ==========
+// (중복 - 필요한 업종 header/fields만 아래 추가)
 const taxReportFormats = {
   cafe: {
     header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
     fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
   },
-  mart: {
-    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
-    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
-  },
-  norabang: {
-    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
-    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
-  },
-  carRepair: {
-    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
-    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
-  },
+  // ... 추가 업종 ...
   other: {
     header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
     fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
@@ -287,7 +277,7 @@ window.downloadTaxReport = function(event) {
   const all = JSON.parse(localStorage.getItem('entries') || "[]");
   const filtered = all.filter(e => e.date >= from && e.date <= to);
   filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
-  const format = taxReportFormats['cafe']; // 업종별 포맷이 다를 경우 활용 가능 (여기선 공통)
+  const format = taxReportFormats['cafe']; // 업종별 포맷 다를 시 적용
   let csv = [format.header.join(',')];
   filtered.forEach(e => {
     csv.push(format.fields.map(f=>{
@@ -331,7 +321,7 @@ function renderQnaList() {
     </li>`;
   });
 }
-// ========== 업종 직접입력 (종합소득세 제출서류) ==========
+// ========== 업종 직접입력 ==========
 window.toggleBizTypeInput = function(sel) {
   const input = document.getElementById('bizTypeInput');
   if(sel.value === 'other') input.style.display = '';
@@ -340,7 +330,6 @@ window.toggleBizTypeInput = function(sel) {
 
 // ---- 모든 바인딩/초기화는 DOMContentLoaded에서! ----
 document.addEventListener('DOMContentLoaded', function() {
-  // 데이터 렌더링 함수들
   if(typeof renderAll === "function") renderAll();
   if(typeof renderInputTabList === "function") renderInputTabList();
   if(typeof renderTaxList === "function") renderTaxList();
@@ -351,4 +340,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // 로그인 팝업/구글로그인 버튼 연결
   const loginMainBtn = document.getElementById('loginMainBtn');
   const googleLoginBtn = document.getElementById('googleLoginBtn');
-  const logoutBtn = document.getElementById('logout
+  if(loginMainBtn) loginMainBtn.onclick = openLoginPopup;
+  if(googleLoginBtn) googleLoginBtn.onclick = function() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then(result => loginSuccess(result.user.email))
+      .catch(err => alert(err.message));
+  };
+  // 로그아웃/상태 감지(옵션)
+  // (네이버/카카오 로그인은 별도 구현 필요!)
+});
