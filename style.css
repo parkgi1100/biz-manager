@@ -435,3 +435,16 @@ canvas#trendChart {
     font-size: 1rem;
   }
 }
+.detail-box {
+  background: #f9fafc;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 25px 20px 18px 20px;
+  font-size: 1.11rem;
+  margin-bottom: 16px;
+}
+.detail-box div {
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
