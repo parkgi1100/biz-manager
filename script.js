@@ -380,12 +380,12 @@ window.openLoginPopup = openLoginPopup;
 // --- onload에서 버튼 이벤트/초기화 모두 연결! ---
 window.onload = function() {
   // 데이터 렌더링 함수들 호출
-  renderAll && renderAll();
-  renderInputTabList && renderInputTabList();
-  renderTaxList && renderTaxList();
-  renderDetailTrans && renderDetailTrans();
-  renderTaxDetail && renderTaxDetail();
-  renderQnaList && renderQnaList();
+// renderAll && renderAll();
+// renderInputTabList && renderInputTabList();
+// renderTaxList && renderTaxList();
+// renderDetailTrans && renderDetailTrans();
+// renderTaxDetail && renderTaxDetail();
+// renderQnaList && renderQnaList();
 
   // ✅ 로그인 팝업/구글로그인 버튼 연결!
   if(document.getElementById('loginMainBtn')) {
