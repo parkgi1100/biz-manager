@@ -447,3 +447,25 @@ canvas#trendChart {
   margin-bottom: 12px;
   word-break: break-all;
 }
+
+.summary-panel.column {
+  flex-direction: column !important;
+  align-items: stretch;
+  gap: 11px;
+  text-align: left;
+}
+.summary-panel.column > div {
+  text-align: left !important;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  font-size: 1.04rem;
+  font-weight: 500;
+  margin: 0;
+}
+.summary-panel.column .num {
+  font-size: 1.11rem;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
