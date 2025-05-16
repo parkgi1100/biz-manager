@@ -263,3 +263,99 @@ window.onload = function() {
   const dateInput = document.getElementById('date');
   if(dateInput) dateInput.value = today;
 };
+
+// ========== 세금계산서 관리 ==========
+let taxEntries = JSON.parse(localStorage.getItem('taxEntries') || "[]");
+function saveTaxEntries() { localStorage.setItem('taxEntries', JSON.stringify(taxEntries)); }
+window.addTaxEntry = function(event) {
+  event.preventDefault();
+  const date = document.getElementById('taxDate').value;
+  const company = document.getElementById('taxCompany').value.trim();
+  const supply = Number(document.getElementById('supplyAmount').value);
+  const tax = Number(document.getElementById('taxAmount').value);
+  const memo = document.getElementById('taxMemo').value.trim();
+  if (!date || !company || !supply || !tax) return alert("필수값 확인!");
+  taxEntries.push({ date, company, supply, tax, memo });
+  saveTaxEntries();
+  renderTaxList();
+  event.target.reset();
+}
+function renderTaxList() {
+  const ul = document.getElementById('taxList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  taxEntries.slice(-10).reverse().forEach((e, idx) => {
+    ul.innerHTML += `<li>
+      <span>${e.date}</span>
+      <span>${e.company}</span>
+      <span>공급 ${e.supply.toLocaleString()}원</span>
+      <span>세액 ${e.tax.toLocaleString()}원</span>
+      ${e.memo ? `<span>(${e.memo})</span>` : ''}
+      <button onclick="deleteTaxEntry(${taxEntries.length - 1 - idx})" style="margin-left:7px;font-size:0.97em;">삭제</button>
+    </li>`;
+  });
+}
+window.deleteTaxEntry = function(idx) {
+  if (!confirm('삭제할까요?')) return;
+  taxEntries.splice(idx,1);
+  saveTaxEntries();
+  renderTaxList();
+}
+
+// ========== 1:1 문의사항 관리 ==========
+let qnaEntries = JSON.parse(localStorage.getItem('qnaEntries') || "[]");
+function saveQnaEntries() { localStorage.setItem('qnaEntries', JSON.stringify(qnaEntries)); }
+window.addQna = function(event) {
+  event.preventDefault();
+  const title = document.getElementById('qnaTitle').value.trim();
+  const content = document.getElementById('qnaContent').value.trim();
+  const user = document.getElementById('qnaUser').value.trim();
+  if (!title || !content) return alert("제목/내용은 필수!");
+  qnaEntries.push({ title, content, user, date: new Date().toISOString().slice(0,16).replace('T',' ') });
+  saveQnaEntries();
+  renderQnaList();
+  event.target.reset();
+}
+function renderQnaList() {
+  const ul = document.getElementById('qnaList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  qnaEntries.slice(-10).reverse().forEach(e => {
+    ul.innerHTML += `<li>
+      <b>${e.title}</b> <span style="font-size:0.93em;">(${e.date})</span><br/>
+      <span>${e.content.replace(/\n/g, "<br/>")}</span>
+      ${e.user ? `<span style="color:#888;">- ${e.user}</span>` : ''}
+    </li>`;
+  });
+}
+
+// ========== 탭 이동시 리스트 갱신 ==========
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.sidebar a').forEach(e => e.classList.remove('active'));
+  document.getElementById(tab + 'Tab').classList.add('active');
+  const idx = { dashboard: 0, input: 1, detailTrans: 2, tax: 3, qna: 4, settings: 5 }[tab];
+  if (document.querySelectorAll('.sidebar a')[idx])
+    document.querySelectorAll('.sidebar a')[idx].classList.add('active');
+  sidebar.classList.remove('show'); overlay.classList.remove('show');
+  if (tab === 'input') renderInputTabList();
+  if (tab === 'dashboard') renderAll();
+  if (tab === 'detailTrans') showFirstDetail();
+  if (tab === 'tax') renderTaxList();
+  if (tab === 'qna') renderQnaList();
+}
+window.showTab = showTab;
+
+// ======= (기존 거래/대시보드/차트 등 나머지 코드 유지!) =======
+
+// onload에 tax/qna 리스트도 기본 랜더링
+window.onload = function() {
+  renderAll();
+  renderInputTabList();
+  renderTaxList();
+  renderQnaList();
+  // 입력탭 오늘날짜 기본값
+  const today = new Date().toISOString().slice(0,10);
+  const dateInput = document.getElementById('date');
+  if(dateInput) dateInput.value = today;
+};
