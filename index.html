@@ -90,7 +90,7 @@
           <input type="date" id="transToDate" required />
           <button type="submit">조회</button>
         </form>
-        <div class="summary-panel" id="transSummary"></div>
+        <div class="summary-panel column" id="transSummary"></div>
         <button onclick="exportDetailTrans()" style="margin:8px 0 12px 0;">내보내기(엑셀/CSV)</button>
         <ul id="detailTransList"></ul>
       </div>
@@ -119,31 +119,45 @@
           <input type="date" id="taxToDate" required />
           <button type="submit">조회</button>
         </form>
-        <div class="summary-panel" id="taxSummary"></div>
+        <div class="summary-panel column" id="taxSummary"></div>
         <button onclick="exportTaxDetail()" style="margin:8px 0 12px 0;">내보내기(엑셀/CSV)</button>
         <ul id="taxDetailList"></ul>
       </div>
       <!-- 종합소득세 제출서류 -->
       <div id="taxReportTab" class="tab">
         <h1>종합소득세 제출용 서류</h1>
-        <form id="taxReportForm" onsubmit="downloadTaxReport(event)">
-          <label>사업자명: <input type="text" id="bizName" required></label>
-          <label>대표자명: <input type="text" id="ownerName" required></label>
-          <label>사업자등록번호: <input type="text" id="bizNum" required></label>
-          <label>업종선택:
-            <select id="bizType" required>
-              <option value="cafe">카페</option>
-              <option value="mart">마트</option>
-              <option value="norabang">노래방</option>
-              <option value="carRepair">자동차수리</option>
-            </select>
-          </label>
-          <label>기간:
-            <input type="date" id="reportFrom" required> ~
-            <input type="date" id="reportTo" required>
-          </label>
-          <button type="submit">국세청 제출용 내보내기(엑셀/CSV)</button>
-        </form>
+<form id="taxReportForm" onsubmit="downloadTaxReport(event)">
+  <div class="form-row">
+    <label>사업자명</label>
+    <input type="text" id="bizName" required>
+  </div>
+  <div class="form-row">
+    <label>대표자명</label>
+    <input type="text" id="ownerName" required>
+  </div>
+  <div class="form-row">
+    <label>사업자등록번호</label>
+    <input type="text" id="bizNum" required>
+  </div>
+  <div class="form-row">
+    <label>업종선택</label>
+    <select id="bizType" onchange="toggleBizTypeInput(this)">
+      <option value="">업종을 선택하세요</option>
+      <option value="cafe">카페</option>
+      <option value="mart">마트</option>
+      <option value="norabang">노래방</option>
+      <option value="carRepair">자동차수리</option>
+      <option value="other">직접입력</option>
+    </select>
+    <input type="text" id="bizTypeInput" placeholder="업종 직접입력" style="display:none;margin-left:8px;" />
+  </div>
+  <div class="form-row">
+    <label>기간</label>
+    <input type="date" id="reportFrom" required> ~
+    <input type="date" id="reportTo" required>
+  </div>
+  <button type="submit">국세청 제출용 내보내기(엑셀/CSV)</button>
+</form>
         <div id="reportGuide" style="font-size:0.9em;color:#555;padding:10px 0 0 0;">
           ⓘ 업종/기간/기본정보 입력 후 [내보내기]를 누르면 국세청 양식으로 엑셀파일 다운로드!
         </div>
