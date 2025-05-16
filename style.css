@@ -131,7 +131,7 @@ body {
 
 /* 메인 컨텐츠 */
 .main-content {
-  padding: 100px 34px 32px 34px;
+  padding: 42px 22px 32px 22px; /* top 42px, 좌우 22px, 아래 32px */
   max-width: 100%;
   width: 100%;
 }
