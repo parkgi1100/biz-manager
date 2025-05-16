@@ -12,12 +12,14 @@
     <button id="toggleBtn" class="hamburger">≡</button>
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-header"><span>카테고리</span></div>
-      <ul>
-        <li><a href="#" class="active" onclick="showTab('dashboard')">대시보드</a></li>
-        <li><a href="#" onclick="showTab('input')">거래입력</a></li>
-        <li><a href="#" onclick="showTab('detailTrans')">거래상세내역</a></li>
-        <li><a href="#" onclick="showTab('settings')">설정</a></li>
-      </ul>
+<ul>
+  <li><a href="#" class="active" onclick="showTab('dashboard')">대시보드</a></li>
+  <li><a href="#" onclick="showTab('input')">거래입력</a></li>
+  <li><a href="#" onclick="showTab('detailTrans')">거래상세내역</a></li>
+  <li><a href="#" onclick="showTab('tax')">세금계산서관리</a></li>
+  <li><a href="#" onclick="showTab('qna')">1:1문의사항</a></li>
+  <li><a href="#" onclick="showTab('settings')">설정</a></li>
+</ul>
     </nav>
     <div class="overlay" id="overlay"></div>
     <div class="main-content">
@@ -81,6 +83,37 @@
         <h1>거래상세내역</h1>
         <div id="detailContent"></div>
       </div>
+<!-- 세금계산서 관리 탭 -->
+<div id="taxTab" class="tab">
+  <h1>세금계산서 관리</h1>
+  <form class="entry-form" onsubmit="addTaxEntry(event)">
+    <input type="date" id="taxDate" required />
+    <input type="text" id="taxCompany" placeholder="거래처명" required />
+    <input type="number" id="supplyAmount" placeholder="공급가액" required />
+    <input type="number" id="taxAmount" placeholder="세액" required />
+    <input type="text" id="taxMemo" placeholder="메모(선택)" />
+    <button type="submit">추가</button>
+  </form>
+  <section class="input-list-section">
+    <h3>최근 세금계산서 내역</h3>
+    <ul id="taxList"></ul>
+  </section>
+</div>
+      <!-- 1:1문의사항 탭 -->
+<div id="qnaTab" class="tab">
+  <h1>1:1문의사항</h1>
+  <form class="entry-form" onsubmit="addQna(event)">
+    <input type="text" id="qnaTitle" placeholder="제목" required />
+    <textarea id="qnaContent" placeholder="문의내용" required style="min-height:60px;resize:vertical;"></textarea>
+    <input type="text" id="qnaUser" placeholder="작성자(선택)" />
+    <button type="submit">문의등록</button>
+  </form>
+  <section class="input-list-section">
+    <h3>내 문의 내역</h3>
+    <ul id="qnaList"></ul>
+  </section>
+</div>
+    
       <!-- 설정 탭 -->
       <div id="settingsTab" class="tab">
         <h1>설정</h1>
