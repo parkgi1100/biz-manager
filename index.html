@@ -13,14 +13,27 @@
 
   <div class="mobile-frame">
     <button id="toggleBtn" class="hamburger">≡</button>
-        <!-- 로그인 박스: 여기 추가! -->
-    <div class="login-box">
-      <button id="googleLoginBtn" class="login-btn">Google 로그인</button>
-      <button id="logoutBtn" class="login-btn" style="display:none;">로그아웃</button>
-      <span id="userEmail"></span>
-    </div>
-    <div class="main-content">
+  <!-- 1) 우상단 로그인 박스 -->
+<div class="login-box" id="loginBox">
+  <button id="loginMainBtn" class="login-btn">로그인</button>
+  <span id="userEmail"></span>
+</div>
+
+<!-- 2) 소셜로그인 선택 팝업 -->
+<div class="login-popup" id="loginPopup">
+  <button class="social-btn" id="googleLoginBtn">
+    <img src="https://developers.google.com/identity/images/g-logo.png" alt="" /> Google 로그인
+  </button>
+  <button class="social-btn" id="kakaoLoginBtn">
+    <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/kakaotalk.svg" alt="" /> 카카오 로그인
+  </button>
+  <button class="social-btn" id="naverLoginBtn">
+    <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/naver.svg" alt="" /> 네이버 로그인
+  </button>
+</div>
+
       <!-- ...기존 내용들... -->
+    <div class="main-content">
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-header"><span>카테고리</span></div>
       <ul>
@@ -32,6 +45,10 @@
         <li><a href="#" onclick="showTab('taxReport')">종합소득세 제출서류</a></li>
         <li><a href="#" onclick="showTab('qna')">1:1문의사항</a></li>
         <li><a href="#" onclick="showTab('settings')">설정</a></li>
+        <!-- 사이드바 ul 맨 마지막에 붙이기 -->
+<li class="mobile-login-menu">
+  <a href="#" onclick="openLoginPopup()">로그인</a>
+</li>
       </ul>
     </nav>
     <div class="overlay" id="overlay"></div>
