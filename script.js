@@ -249,3 +249,20 @@ window.onload = function() {
   // 기간 필터 기본
   getDateRange();
 };
+
+// 입력 탭에만 보이는 최근 거래 리스트
+function renderInputTabList() {
+  const ul = document.getElementById('inputRecordList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  entries.slice(-10).reverse().forEach((e, idx) => {
+    ul.innerHTML += `<li class="${e.type}" onclick="showDetail(${entries.length - 1 - idx})" style="cursor:pointer;">
+      <span>${e.date}</span>
+      <span>${e.type === 'income' ? '수입' : '지출'}</span>
+      <span>${e.category || '항목없음'}</span>
+      <span>${e.amount.toLocaleString()}원</span>
+      ${e.memo ? `<span>(${e.memo})</span>` : ''}
+    </li>`;
+  });
+}
+
