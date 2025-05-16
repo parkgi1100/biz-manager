@@ -28,14 +28,19 @@
       <!-- 대시보드 탭 -->
       <div id="dashboardTab" class="tab active">
         <h1>사업소득 대시보드</h1>
-        <div class="period-filter">
-          <input type="date" id="fromDate" />
-          <span>~</span>
-          <input type="date" id="toDate" />
-          <button onclick="setQuickPeriod('week')">최근7일</button>
-          <button onclick="setQuickPeriod('month')">이번달</button>
-          <button onclick="setQuickPeriod('year')">올해</button>
-        </div>
+       <div class="period-filter">
+  <div class="date-row">
+    <input type="date" id="fromDate" />
+    <span>~</span>
+    <input type="date" id="toDate" />
+  </div>
+  <div class="quick-btn-row">
+    <button onclick="setQuickPeriod('week')">최근7일</button>
+    <button onclick="setQuickPeriod('month')">이번달</button>
+    <button onclick="setQuickPeriod('year')">올해</button>
+  </div>
+</div>
+
         <div class="summary-panel">
           <div><div>매출합계</div><div class="num" id="incomeSum">0</div></div>
           <div><div>지출합계</div><div class="num" id="expenseSum">0</div></div>
