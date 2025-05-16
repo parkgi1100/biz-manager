@@ -1,14 +1,8 @@
-// ========== 데이터 로드/저장 ==========
-function loadEntries() {
-  try { return JSON.parse(localStorage.getItem('entries')) || []; }
-  catch { return []; }
-}
-function saveEntries(entries) {
-  localStorage.setItem('entries', JSON.stringify(entries));
-}
-let entries = loadEntries();
+// ======== 거래 데이터 (거래입력, 거래상세내역, 대시보드) ========
+let entries = JSON.parse(localStorage.getItem('entries') || "[]");
+function saveEntries() { localStorage.setItem('entries', JSON.stringify(entries)); }
 
-// ========== 거래 추가 ==========
+// 거래입력 추가
 window.addEntry = function(event) {
   event.preventDefault();
   const date = document.getElementById('date').value;
@@ -18,19 +12,19 @@ window.addEntry = function(event) {
   const memo = document.getElementById('memo').value.trim();
   if (!date || !amount) return alert("날짜와 금액은 필수!");
   entries.push({ date, type, amount, category, memo });
-  saveEntries(entries);
-  renderAll();
+  saveEntries();
   renderInputTabList();
-  document.querySelector('.entry-form').reset();
-}
+  renderAll(); // 대시보드 갱신
+  event.target.reset();
+};
 
-// ========== 거래입력탭: 최근 거래리스트 ==========
+// 최근 거래 리스트 (입력탭)
 function renderInputTabList() {
   const ul = document.getElementById('inputRecordList');
   if (!ul) return;
   ul.innerHTML = '';
   entries.slice(-10).reverse().forEach((e, idx) => {
-    ul.innerHTML += `<li class="${e.type}" onclick="showDetail(${entries.length - 1 - idx})" style="cursor:pointer;">
+    ul.innerHTML += `<li class="${e.type}">
       <span>${e.date}</span>
       <span>${e.type === 'income' ? '수입' : '지출'}</span>
       <span>${e.category || '항목없음'}</span>
@@ -40,231 +34,84 @@ function renderInputTabList() {
   });
 }
 
-// ========== 거래상세내역 탭 ==========
-window.showDetail = function(idx) {
-  const e = entries[idx];
-  if (!e) return;
-  showTab('detailTrans');
-  document.getElementById('detailContent').innerHTML = `
-    <div class="detail-box">
-      <div><b>날짜:</b> ${e.date}</div>
-      <div><b>구분:</b> ${e.type === 'income' ? '수입' : '지출'}</div>
-      <div><b>금액:</b> ${e.amount.toLocaleString()}원</div>
-      <div><b>항목:</b> ${e.category || '항목없음'}</div>
-      <div><b>메모:</b> ${e.memo || '-'}</div>
-    </div>
-    <button onclick="deleteEntry(${idx}); showFirstDetail();" style="background:#eee;color:#d22;margin-right:7px;">삭제</button>
-    <button onclick="showTab('input')" style="margin-right:7px;">입력으로</button>
-    <button onclick="showTab('dashboard')">대시보드로</button>
-  `;
-};
+// =========== 대시보드 요약/차트 (대시보드 탭) ==========
+// 대시보드 구현은 네 원본 코드 유지하면 되고, 예시는 생략.
+// renderAll() 등 대시보드 갱신 함수 반드시 원본과 합쳐서 사용!
 
-// 최신 거래 상세(초기 진입용)
-function showFirstDetail() {
-  if (entries.length === 0) {
-    document.getElementById('detailContent').innerHTML = '<div style="padding:22px;">거래 내역이 없습니다.</div>';
-  } else {
-    showDetail(entries.length - 1);
-  }
-}
-
-// ========== 거래 삭제 ==========
-window.deleteEntry = function(idx) {
-  if (!confirm('삭제할까요?')) return;
-  entries.splice(idx,1);
-  saveEntries(entries);
-  renderAll();
-  renderInputTabList();
-}
-
-// ========== 대시보드/차트 등 ==========
-
-// 날짜범위 가져오기 (필터)
-function getDateRange() {
-  let from = document.getElementById('fromDate').value;
-  let to = document.getElementById('toDate').value;
-  if (!from || !to) {
-    const today = new Date();
-    const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 6);
-    from = weekAgo.toISOString().slice(0,10);
-    to = today.toISOString().slice(0,10);
-    document.getElementById('fromDate').value = from;
-    document.getElementById('toDate').value = to;
-  }
-  return [from, to];
-}
-window.setQuickPeriod = function(mode) {
-  const today = new Date();
-  let from, to;
-  to = today.toISOString().slice(0,10);
-  if (mode === 'week') {
-    const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 6);
-    from = weekAgo.toISOString().slice(0,10);
-  } else if (mode === 'month') {
-    from = today.toISOString().slice(0,7) + '-01';
-  } else if (mode === 'year') {
-    from = today.getFullYear() + '-01-01';
-  }
-  document.getElementById('fromDate').value = from;
-  document.getElementById('toDate').value = to;
-  renderAll();
-}
-
-// 날짜별 필터링
-function filterEntriesByDate(entries, from, to) {
+// ======= 거래상세내역 (기간조회/요약/내보내기) =======
+function filterTrans(entries, from, to) {
   return entries.filter(e => e.date >= from && e.date <= to);
 }
-
-// 요약 합계 계산
-function summarize(entries) {
+function summarizeTrans(entries) {
   let income = 0, expense = 0;
   for (const e of entries) {
     if (e.type === "income") income += e.amount;
     else expense += e.amount;
   }
-  return { income, expense, profit: income - expense };
+  return { income, expense, profit: income - expense, count: entries.length };
 }
-
-// 베스트(매출/지출) top5
-function getBest(entries, type) {
-  const map = {};
-  for (const e of entries) if (e.type === type) {
-    const k = e.category || '기타';
-    map[k] = (map[k] || 0) + e.amount;
+function renderDetailTrans() {
+  const all = JSON.parse(localStorage.getItem('entries') || "[]");
+  let from = document.getElementById('transFromDate')?.value;
+  let to = document.getElementById('transToDate')?.value;
+  if (!from || !to) {
+    const today = new Date();
+    const monthAgo = new Date(today); monthAgo.setMonth(today.getMonth() - 1);
+    from = monthAgo.toISOString().slice(0,10);
+    to = today.toISOString().slice(0,10);
+    if(document.getElementById('transFromDate')) document.getElementById('transFromDate').value = from;
+    if(document.getElementById('transToDate')) document.getElementById('transToDate').value = to;
   }
-  return Object.entries(map)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,5);
-}
-
-// 최근 거래 5개
-function getRecent(entries, limit=5) {
-  return [...entries].sort((a,b)=>b.date.localeCompare(a.date)).slice(0, limit);
-}
-
-// 대시보드 요약 출력
-function renderSummary(filtered) {
-  const s = summarize(filtered);
-  document.getElementById('incomeSum').textContent = s.income.toLocaleString();
-  document.getElementById('expenseSum').textContent = s.expense.toLocaleString();
-  document.getElementById('profitSum').textContent = s.profit.toLocaleString();
-}
-
-// 베스트 매출/지출 출력
-function renderBest(filtered) {
-  const incomeList = document.getElementById('bestIncomeList');
-  incomeList.innerHTML = '';
-  getBest(filtered, "income").forEach((e, idx) => {
-    incomeList.innerHTML += `<li><span class="rank">🥇🥈🥉⭐️⭐️`[idx] + `</span>${e[0]}<span class="amount">${e[1].toLocaleString()}원</span></li>`;
-  });
-  const expenseList = document.getElementById('bestExpenseList');
-  expenseList.innerHTML = '';
-  getBest(filtered, "expense").forEach((e, idx) => {
-    expenseList.innerHTML += `<li><span class="rank">🥇🥈🥉⭐️⭐️`[idx] + `</span>${e[0]}<span class="amount">${e[1].toLocaleString()}원</span></li>`;
-  });
-}
-
-// 최근 거래 출력
-function renderRecent(filtered) {
-  const ul = document.getElementById('recentList');
+  const filtered = filterTrans(all, from, to);
+  const sum = summarizeTrans(filtered);
+  document.getElementById('transSummary').innerHTML = `
+    <b>수입:</b> ${sum.income.toLocaleString()}원 |
+    <b>지출:</b> ${sum.expense.toLocaleString()}원 |
+    <b>순이익:</b> ${sum.profit.toLocaleString()}원 |
+    <b>거래수:</b> ${sum.count}건
+  `;
+  const ul = document.getElementById('detailTransList');
   ul.innerHTML = '';
-  getRecent(filtered).forEach(e => {
+  filtered.forEach(e => {
     ul.innerHTML += `<li>
       <span>${e.date}</span>
       <span>${e.type === 'income' ? '수입' : '지출'}</span>
-      <span>${e.category || '항목없음'}</span>
+      <span>${e.category || '-'}</span>
       <span>${e.amount.toLocaleString()}원</span>
-      ${e.memo ? `<span>(${e.memo})</span>` : ''}
+      <span>${e.memo || ''}</span>
     </li>`;
   });
 }
-
-// 전체 대시보드 갱신
-function renderAll() {
-  const [from, to] = getDateRange();
-  const filtered = filterEntriesByDate(entries, from, to);
-  renderSummary(filtered);
-  renderBest(filtered);
-  renderRecent(filtered);
-  renderChart(filtered);
-  renderCompare(filtered, from, to);
+window.filterTransByPeriod = function(event) {
+  event.preventDefault();
+  renderDetailTrans();
 }
-
-// 차트 그리기
-let chartObj = null;
-function renderChart(filtered) {
-  let dates = [];
-  let incomeMap = {}, expenseMap = {};
+window.exportDetailTrans = function() {
+  const all = JSON.parse(localStorage.getItem('entries') || "[]");
+  let from = document.getElementById('transFromDate').value;
+  let to = document.getElementById('transToDate').value;
+  const filtered = filterTrans(all, from, to);
+  let header = ["일자", "구분", "항목", "금액", "메모"];
+  let csv = [header.join(',')];
   filtered.forEach(e => {
-    dates.includes(e.date) || dates.push(e.date);
-    if (e.type === "income") incomeMap[e.date] = (incomeMap[e.date]||0)+e.amount;
-    else expenseMap[e.date] = (expenseMap[e.date]||0)+e.amount;
+    csv.push([
+      e.date,
+      e.type === "income" ? "수입" : "지출",
+      e.category || "",
+      e.amount || 0,
+      e.memo || ""
+    ].map(v=>`"${v}"`).join(','));
   });
-  dates.sort();
-  const incomeArr = dates.map(d => incomeMap[d]||0);
-  const expenseArr = dates.map(d => expenseMap[d]||0);
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  if (chartObj) chartObj.destroy();
-  chartObj = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: dates,
-      datasets: [
-        { label: '매출', data: incomeArr, borderWidth: 2, borderColor: '#22c55e', backgroundColor:'rgba(34,197,94,0.07)', tension:0.32, fill:true},
-        { label: '지출', data: expenseArr, borderWidth: 2, borderColor: '#ef4444', backgroundColor:'rgba(239,68,68,0.08)', tension:0.32, fill:true},
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: true, labels: { font: {size: 14} } } },
-      scales: {
-        y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() + "원" } },
-        x: { ticks: { font: {size:13} } }
-      }
-    }
-  });
-}
-
-// 기간 이동 (전년)
-function getPeriod(dateStr, diff, type='month') {
-  const d = new Date(dateStr);
-  if (type==='month') d.setMonth(d.getMonth() + diff);
-  if (type==='year') d.setFullYear(d.getFullYear() + diff);
-  return d.toISOString().slice(0,10);
-}
-
-// 비교 패널(전년 동기간만!)
-function renderCompare(filtered, from, to) {
-  const prevYearFrom = getPeriod(from, -1, 'year');
-  const prevYearTo = getPeriod(to, -1, 'year');
-  const sumByDate = (from, to) => summarize(
-    entries.filter(e => e.date >= from && e.date <= to)
-  );
-  const prevYear = sumByDate(prevYearFrom, prevYearTo);
-  const now = summarize(filtered);
-
-  document.getElementById('prevYearIncome').textContent = prevYear.income.toLocaleString();
-
-  // 변화: 전년 대비로만
-  const diff = now.income - prevYear.income;
-  let per = prevYear.income ? ((diff/prevYear.income)*100).toFixed(1) : (now.income ? 100 : 0);
-  let arrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "-");
-  document.getElementById('compareChange').textContent = 
-    (diff > 0 ? "+" : "") + diff.toLocaleString() + "원 (" + per + "%)";
-  document.getElementById('compareArrow').textContent = arrow;
-}
-
-// ========== 초기 렌더링 ==========
-window.onload = function() {
-  renderAll();
-  renderInputTabList();
-  // 입력탭 오늘날짜 기본값
-  const today = new Date().toISOString().slice(0,10);
-  const dateInput = document.getElementById('date');
-  if(dateInput) dateInput.value = today;
+  const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `거래상세내역_${from}_${to}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
-// ========== 세금계산서 관리 ==========
+// ======= 세금계산서 관리/상세관리/내보내기 =======
 let taxEntries = JSON.parse(localStorage.getItem('taxEntries') || "[]");
 function saveTaxEntries() { localStorage.setItem('taxEntries', JSON.stringify(taxEntries)); }
 window.addTaxEntry = function(event) {
@@ -291,18 +138,127 @@ function renderTaxList() {
       <span>공급 ${e.supply.toLocaleString()}원</span>
       <span>세액 ${e.tax.toLocaleString()}원</span>
       ${e.memo ? `<span>(${e.memo})</span>` : ''}
-      <button onclick="deleteTaxEntry(${taxEntries.length - 1 - idx})" style="margin-left:7px;font-size:0.97em;">삭제</button>
     </li>`;
   });
 }
-window.deleteTaxEntry = function(idx) {
-  if (!confirm('삭제할까요?')) return;
-  taxEntries.splice(idx,1);
-  saveTaxEntries();
-  renderTaxList();
+function filterTax(entries, from, to) {
+  return entries.filter(e => e.date >= from && e.date <= to);
 }
+function summarizeTax(entries) {
+  let supply = 0, tax = 0;
+  for (const e of entries) {
+    supply += e.supply || 0;
+    tax += e.tax || 0;
+  }
+  return { supply, tax, count: entries.length };
+}
+function renderTaxDetail() {
+  const all = JSON.parse(localStorage.getItem('taxEntries') || "[]");
+  let from = document.getElementById('taxFromDate')?.value;
+  let to = document.getElementById('taxToDate')?.value;
+  if (!from || !to) {
+    const today = new Date();
+    const monthAgo = new Date(today); monthAgo.setMonth(today.getMonth() - 1);
+    from = monthAgo.toISOString().slice(0,10);
+    to = today.toISOString().slice(0,10);
+    if(document.getElementById('taxFromDate')) document.getElementById('taxFromDate').value = from;
+    if(document.getElementById('taxToDate')) document.getElementById('taxToDate').value = to;
+  }
+  const filtered = filterTax(all, from, to);
+  const sum = summarizeTax(filtered);
+  document.getElementById('taxSummary').innerHTML = `
+    <b>공급가액 합계:</b> ${sum.supply.toLocaleString()}원 |
+    <b>세액 합계:</b> ${sum.tax.toLocaleString()}원 |
+    <b>건수:</b> ${sum.count}건
+  `;
+  const ul = document.getElementById('taxDetailList');
+  ul.innerHTML = '';
+  filtered.forEach(e => {
+    ul.innerHTML += `<li>
+      <span>${e.date}</span>
+      <span>${e.company || '-'}</span>
+      <span>공급 ${e.supply?.toLocaleString() || 0}원</span>
+      <span>세액 ${e.tax?.toLocaleString() || 0}원</span>
+      <span>${e.memo || ''}</span>
+    </li>`;
+  });
+}
+window.filterTaxByPeriod = function(event) {
+  event.preventDefault();
+  renderTaxDetail();
+}
+window.exportTaxDetail = function() {
+  const all = JSON.parse(localStorage.getItem('taxEntries') || "[]");
+  let from = document.getElementById('taxFromDate').value;
+  let to = document.getElementById('taxToDate').value;
+  const filtered = filterTax(all, from, to);
+  let header = ["일자", "거래처명", "공급가액", "세액", "메모"];
+  let csv = [header.join(',')];
+  filtered.forEach(e => {
+    csv.push([
+      e.date,
+      e.company || "",
+      e.supply || 0,
+      e.tax || 0,
+      e.memo || ""
+    ].map(v=>`"${v}"`).join(','));
+  });
+  const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `세금계산서상세_${from}_${to}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
-// ========== 1:1 문의사항 관리 ==========
+// ========== 종합소득세 제출서류(내보내기) ==========
+const taxReportFormats = {
+  cafe: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
+  mart: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
+  // ...업종 추가 가능!
+};
+window.downloadTaxReport = function(event) {
+  event.preventDefault();
+  // 입력값
+  const bizName = document.getElementById('bizName').value.trim();
+  const ownerName = document.getElementById('ownerName').value.trim();
+  const bizNum = document.getElementById('bizNum').value.trim();
+  const bizType = document.getElementById('bizType').value;
+  const from = document.getElementById('reportFrom').value;
+  const to = document.getElementById('reportTo').value;
+  if (!bizType || !from || !to) return alert("필수값 입력!");
+  const all = JSON.parse(localStorage.getItem('entries') || "[]");
+  const filtered = all.filter(e => e.date >= from && e.date <= to);
+  // 타입 한글화
+  filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
+  const format = taxReportFormats[bizType];
+  if (!format) return alert("업종포맷 없음!");
+  let csv = [format.header.join(',')];
+  filtered.forEach(e => {
+    csv.push(format.fields.map(f=>{
+      if(f==="bizName") return bizName;
+      if(f==="ownerName") return ownerName;
+      if(f==="bizNum") return bizNum;
+      return e[f]||"";
+    }).map(v=>`"${v}"`).join(','));
+  });
+  const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `종합소득세_${bizType}_${from}_${to}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// ====== 1:1문의사항 ======
 let qnaEntries = JSON.parse(localStorage.getItem('qnaEntries') || "[]");
 function saveQnaEntries() { localStorage.setItem('qnaEntries', JSON.stringify(qnaEntries)); }
 window.addQna = function(event) {
@@ -329,33 +285,5 @@ function renderQnaList() {
   });
 }
 
-// ========== 탭 이동시 리스트 갱신 ==========
-function showTab(tab) {
-  document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
-  document.querySelectorAll('.sidebar a').forEach(e => e.classList.remove('active'));
-  document.getElementById(tab + 'Tab').classList.add('active');
-  const idx = { dashboard: 0, input: 1, detailTrans: 2, tax: 3, qna: 4, settings: 5 }[tab];
-  if (document.querySelectorAll('.sidebar a')[idx])
-    document.querySelectorAll('.sidebar a')[idx].classList.add('active');
-  sidebar.classList.remove('show'); overlay.classList.remove('show');
-  if (tab === 'input') renderInputTabList();
-  if (tab === 'dashboard') renderAll();
-  if (tab === 'detailTrans') showFirstDetail();
-  if (tab === 'tax') renderTaxList();
-  if (tab === 'qna') renderQnaList();
-}
-window.showTab = showTab;
-
-// ======= (기존 거래/대시보드/차트 등 나머지 코드 유지!) =======
-
-// onload에 tax/qna 리스트도 기본 랜더링
-window.onload = function() {
-  renderAll();
-  renderInputTabList();
-  renderTaxList();
-  renderQnaList();
-  // 입력탭 오늘날짜 기본값
-  const today = new Date().toISOString().slice(0,10);
-  const dateInput = document.getElementById('date');
-  if(dateInput) dateInput.value = today;
-};
+// ========== 설정탭(향후 로그인/백업/기타용) =========
+// 향후 추가/확장 예정!
