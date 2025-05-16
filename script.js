@@ -1,3 +1,18 @@
+// --- Firebase 초기화 (복사해온 config로 바꿔줘!) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyARw0VFLjUmCiNLODfBqL81ktyC4kdZOCk",
+  authDomain: "biz-manager-68be3.firebaseapp.com",
+  projectId: "biz-manager-68be3",
+  storageBucket: "biz-manager-68be3.firebasestorage.app",
+  messagingSenderId: "947454696313",
+  appId: "1:947454696313:web:4551bd4fafacb10b35eda8",
+  measurementId: "G-J8LGYTP9DC"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+
+
 // ======== 거래 데이터 ========
 let entries = JSON.parse(localStorage.getItem('entries') || "[]");
 function saveEntries() { localStorage.setItem('entries', JSON.stringify(entries)); }
