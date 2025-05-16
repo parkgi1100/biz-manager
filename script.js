@@ -21,7 +21,6 @@ window.addEntry = function(event) {
   saveEntries(entries);
   renderAll();
   renderInputTabList();
-  renderList(entries);
   document.querySelector('.entry-form').reset();
 }
 
@@ -41,28 +40,12 @@ function renderInputTabList() {
   });
 }
 
-// ========== 거래내역 전체 리스트 ==========
-function renderList(list) {
-  const ul = document.getElementById('recordList');
-  if (!ul) return;
-  ul.innerHTML = '';
-  list.slice().reverse().forEach((e, idx) => {
-    ul.innerHTML += `<li class="${e.type}" onclick="showDetail(${list.length - 1 - idx})" style="cursor:pointer;">
-      <span>${e.date}</span>
-      <span>${e.type === 'income' ? '수입' : '지출'}</span>
-      <span>${e.category || '항목없음'}</span>
-      <span>${e.amount.toLocaleString()}원</span>
-      ${e.memo ? `<span>(${e.memo})</span>` : ''}
-    </li>`;
-  });
-}
-
-// ========== 거래 상세 탭 ==========
+// ========== 거래상세내역 탭 ==========
 window.showDetail = function(idx) {
   const e = entries[idx];
   if (!e) return;
-  showTab('detail');
-  const detail = `
+  showTab('detailTrans');
+  document.getElementById('detailContent').innerHTML = `
     <div class="detail-box">
       <div><b>날짜:</b> ${e.date}</div>
       <div><b>구분:</b> ${e.type === 'income' ? '수입' : '지출'}</div>
@@ -70,10 +53,19 @@ window.showDetail = function(idx) {
       <div><b>항목:</b> ${e.category || '항목없음'}</div>
       <div><b>메모:</b> ${e.memo || '-'}</div>
     </div>
-    <button onclick="editEntry(${idx})" style="margin-right:10px;">수정</button>
-    <button onclick="deleteEntry(${idx}); showTab('list');" style="background:#eee;color:#d22;">삭제</button>
+    <button onclick="deleteEntry(${idx}); showFirstDetail();" style="background:#eee;color:#d22;margin-right:7px;">삭제</button>
+    <button onclick="showTab('input')" style="margin-right:7px;">입력으로</button>
+    <button onclick="showTab('dashboard')">대시보드로</button>
   `;
-  document.getElementById('detailContent').innerHTML = detail;
+};
+
+// 최신 거래 상세(초기 진입용)
+function showFirstDetail() {
+  if (entries.length === 0) {
+    document.getElementById('detailContent').innerHTML = '<div style="padding:22px;">거래 내역이 없습니다.</div>';
+  } else {
+    showDetail(entries.length - 1);
+  }
 }
 
 // ========== 거래 삭제 ==========
@@ -83,7 +75,6 @@ window.deleteEntry = function(idx) {
   saveEntries(entries);
   renderAll();
   renderInputTabList();
-  renderList(entries);
 }
 
 // ========== 대시보드/차트 등 (간단버전) ==========
@@ -179,7 +170,6 @@ function renderAll() {
   renderRecent(filtered);
   renderChart(filtered);
   renderCompare(filtered, from, to);
-  renderList(entries);
 }
 let chartObj = null;
 function renderChart(filtered) {
@@ -232,4 +222,7 @@ function renderCompare(filtered, from, to) {
   const prevYear = sumByDate(prevYearFrom, prevYearTo);
   const now = summarize(filtered);
   document.getElementById('prevMonthIncome').textContent = prevMonth.income.toLocaleString();
-  document.getElementById('prevYearIncome').
+  document.getElementById('prevYearIncome').textContent = prevYear.income.toLocaleString();
+  const diff = now.income - prevMonth.income;
+  let per = prevMonth.income ? ((diff/prevMonth.income)*100).toFixed(1) : (now.income ? 100 : 0);
+  let arrow = diff > 0 ? "▲" : (diff < 0
