@@ -1,3 +1,28 @@
+// --- 팝업 열기/닫기 함수 (window 전역) ---
+function openLoginPopup() {
+  document.getElementById('loginPopup').classList.add('show');
+  document.addEventListener('mousedown', closeLoginPopupOutside);
+}
+function closeLoginPopup() {
+  document.getElementById('loginPopup').classList.remove('show');
+  document.removeEventListener('mousedown', closeLoginPopupOutside);
+}
+function closeLoginPopupOutside(e) {
+  if (
+    !document.getElementById('loginPopup').contains(e.target) &&
+    !document.getElementById('loginMainBtn').contains(e.target)
+  ) {
+    closeLoginPopup();
+  }
+}
+window.openLoginPopup = openLoginPopup;
+
+// 로그인 성공 후: 팝업 자동 닫기
+function loginSuccess(email) {
+  document.getElementById('userEmail').textContent = email + " 로그인됨!";
+  closeLoginPopup();
+}
+
 // --- Firebase 초기화 (복사해온 config로 바꿔줘!) ---
 const firebaseConfig = {
   apiKey: "AIzaSyARw0VFLjUmCiNLODfBqL81ktyC4kdZOCk",
@@ -11,12 +36,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
-
-
 // ======== 거래 데이터 ========
 let entries = JSON.parse(localStorage.getItem('entries') || "[]");
 function saveEntries() { localStorage.setItem('entries', JSON.stringify(entries)); }
-
 window.addEntry = function(event) {
   event.preventDefault();
   const date = document.getElementById('date').value;
@@ -28,10 +50,9 @@ window.addEntry = function(event) {
   entries.push({ date, type, amount, category, memo });
   saveEntries();
   renderInputTabList();
-  renderAll();
+  renderAll && renderAll();
   event.target.reset();
 };
-
 // 거래입력(최근거래)
 function renderInputTabList() {
   const ul = document.getElementById('inputRecordList');
@@ -47,9 +68,6 @@ function renderInputTabList() {
     </li>`;
   });
 }
-
-// ======== 대시보드(요약/차트) (별도 함수로 유지) ========
-
 // ======= 거래상세내역 (기간조회/요약/내보내기) =======
 function filterTrans(entries, from, to) {
   return entries.filter(e => e.date >= from && e.date <= to);
@@ -62,7 +80,6 @@ function summarizeTrans(entries) {
   }
   return { income, expense, profit: income - expense, count: entries.length };
 }
-
 // ✅ 요약부분 세로 배열
 function renderTransSummary(data) {
   document.getElementById('transSummary').innerHTML = `
@@ -72,7 +89,6 @@ function renderTransSummary(data) {
     <div>거래수: <span class="num">${data.count}건</span></div>
   `;
 }
-
 function renderDetailTrans() {
   const all = JSON.parse(localStorage.getItem('entries') || "[]");
   let from = document.getElementById('transFromDate')?.value;
@@ -128,8 +144,6 @@ window.exportDetailTrans = function() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
-
-
 // ======= 세금계산서 관리/상세관리/내보내기 =======
 let taxEntries = JSON.parse(localStorage.getItem('taxEntries') || "[]");
 function saveTaxEntries() { localStorage.setItem('taxEntries', JSON.stringify(taxEntries)); }
@@ -171,7 +185,6 @@ function summarizeTax(entries) {
   }
   return { supply, tax, count: entries.length };
 }
-
 // ✅ 세금계산서상세 요약(세로)
 function renderTaxSummary(data) {
   document.getElementById('taxSummary').innerHTML = `
@@ -180,7 +193,6 @@ function renderTaxSummary(data) {
     <div>건수: <span class="num">${data.count}건</span></div>
   `;
 }
-
 function renderTaxDetail() {
   const all = JSON.parse(localStorage.getItem('taxEntries') || "[]");
   let from = document.getElementById('taxFromDate')?.value;
@@ -236,7 +248,6 @@ window.exportTaxDetail = function() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
-
 // ========== 종합소득세 제출서류(내보내기) ==========
 const taxReportFormats = {
   cafe: {
@@ -294,7 +305,6 @@ window.downloadTaxReport = function(event) {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
-
 // ====== 1:1문의사항 ======
 let qnaEntries = JSON.parse(localStorage.getItem('qnaEntries') || "[]");
 function saveQnaEntries() { localStorage.setItem('qnaEntries', JSON.stringify(qnaEntries)); }
@@ -321,7 +331,6 @@ function renderQnaList() {
     </li>`;
   });
 }
-
 // ========== 업종 직접입력 (종합소득세 제출서류) ==========
 window.toggleBizTypeInput = function(sel) {
   const input = document.getElementById('bizTypeInput');
@@ -329,103 +338,17 @@ window.toggleBizTypeInput = function(sel) {
   else input.style.display = 'none';
 }
 
-// ========== onload 등 기타 ==========
-// (네 index.html에서 onload에 아래들 호출해주면 끝)
+// ---- 모든 바인딩/초기화는 DOMContentLoaded에서! ----
+document.addEventListener('DOMContentLoaded', function() {
+  // 데이터 렌더링 함수들
+  if(typeof renderAll === "function") renderAll();
+  if(typeof renderInputTabList === "function") renderInputTabList();
+  if(typeof renderTaxList === "function") renderTaxList();
+  if(typeof renderDetailTrans === "function") renderDetailTrans();
+  if(typeof renderTaxDetail === "function") renderTaxDetail();
+  if(typeof renderQnaList === "function") renderQnaList();
 
-// 로그인
-document.getElementById('googleLoginBtn').onclick = function() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider)
-    .then(result => {
-      const user = result.user;
-      document.getElementById('userEmail').textContent = user.email + " 로그인됨!";
-    })
-    .catch(error => alert("로그인 실패: " + error.message));
-};
-// 로그아웃
-document.getElementById('logoutBtn').onclick = function() {
-  auth.signOut();
-};
-// 로그인 상태 감지
-auth.onAuthStateChanged(user => {
-  if(user) {
-    document.getElementById('googleLoginBtn').style.display = "none";
-    document.getElementById('logoutBtn').style.display = "";
-    document.getElementById('userEmail').textContent = user.email + " 로그인됨!";
-  } else {
-    document.getElementById('googleLoginBtn').style.display = "";
-    document.getElementById('logoutBtn').style.display = "none";
-    document.getElementById('userEmail').textContent = "";
-  }
-});
-// --- 팝업 열기/닫기 함수 (window 전역) ---
-function openLoginPopup() {
-  document.getElementById('loginPopup').classList.add('show');
-  document.addEventListener('mousedown', closeLoginPopupOutside);
-}
-function closeLoginPopup() {
-  document.getElementById('loginPopup').classList.remove('show');
-  document.removeEventListener('mousedown', closeLoginPopupOutside);
-}
-function closeLoginPopupOutside(e) {
-  if (
-    !document.getElementById('loginPopup').contains(e.target) &&
-    !document.getElementById('loginMainBtn').contains(e.target)
-  ) {
-    closeLoginPopup();
-  }
-}
-window.openLoginPopup = openLoginPopup;
-
-// --- onload에서 버튼 이벤트/초기화 모두 연결! ---
-window.onload = function() {
-  // 데이터 렌더링 함수들 호출
-// renderAll && renderAll();
-// renderInputTabList && renderInputTabList();
-// renderTaxList && renderTaxList();
-// renderDetailTrans && renderDetailTrans();
-// renderTaxDetail && renderTaxDetail();
-// renderQnaList && renderQnaList();
-
-  // ✅ 로그인 팝업/구글로그인 버튼 연결!
-  if(document.getElementById('loginMainBtn')) {
-    document.getElementById('loginMainBtn').onclick = openLoginPopup;
-  }
-  if(document.getElementById('googleLoginBtn')) {
-    document.getElementById('googleLoginBtn').onclick = function() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider)
-        .then(result => loginSuccess(result.user.email))
-        .catch(err => alert(err.message));
-    }
-  }
-  // 로그아웃/상태 감지
-  if(document.getElementById('logoutBtn')) {
-    document.getElementById('logoutBtn').onclick = function() {
-      auth.signOut();
-    };
-  }
-  auth.onAuthStateChanged(user => {
-    if(user) {
-      document.getElementById('googleLoginBtn').style.display = "none";
-      if(document.getElementById('logoutBtn')) document.getElementById('logoutBtn').style.display = "";
-      document.getElementById('userEmail').textContent = user.email + " 로그인됨!";
-    } else {
-      document.getElementById('googleLoginBtn').style.display = "";
-      if(document.getElementById('logoutBtn')) document.getElementById('logoutBtn').style.display = "none";
-      document.getElementById('userEmail').textContent = "";
-    }
-  });
-}
-
-// 로그인 성공 후: 팝업 자동 닫기
-function loginSuccess(email) {
-  document.getElementById('userEmail').textContent = email + " 로그인됨!";
-  closeLoginPopup();
-}
-
-// 팝업 함수 등 전역 선언은 그대로 OK
-
-// -------------
-// *** 아래처럼 onload 바깥에 또 이벤트 연결하는 부분은 삭제! ***
-// document.getElementById('googleLoginBtn').onclick = function() { ... };
+  // 로그인 팝업/구글로그인 버튼 연결
+  const loginMainBtn = document.getElementById('loginMainBtn');
+  const googleLoginBtn = document.getElementById('googleLoginBtn');
+  const logoutBtn = document.getElementById('logout
