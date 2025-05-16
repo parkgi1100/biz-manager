@@ -10,14 +10,17 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div id="loginBox" style="margin-bottom:20px;">
-  <button id="googleLoginBtn">Google 로그인</button>
-  <button id="logoutBtn" style="display:none;">로그아웃</button>
-  <span id="userEmail" style="margin-left: 10px;"></span>
-</div>
 
   <div class="mobile-frame">
     <button id="toggleBtn" class="hamburger">≡</button>
+        <!-- 로그인 박스: 여기 추가! -->
+    <div class="login-box">
+      <button id="googleLoginBtn" class="login-btn">Google 로그인</button>
+      <button id="logoutBtn" class="login-btn" style="display:none;">로그아웃</button>
+      <span id="userEmail"></span>
+    </div>
+    <div class="main-content">
+      <!-- ...기존 내용들... -->
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-header"><span>카테고리</span></div>
       <ul>
