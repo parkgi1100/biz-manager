@@ -469,27 +469,28 @@ canvas#trendChart {
   margin-left: 6px;
 }
 
-/* 종합소득세 제출서류 폼 라벨/입력칸 강조 */
+/* 종합소득세 제출서류 폼 라벨/입력칸 약간 줄이기 */
 #taxReportForm label {
   display: block;
-  font-size: 1.18rem;       /* 라벨 글씨 크게 */
-  font-weight: 600;
-  margin: 15px 0 7px 0;
+  font-size: 1.06rem;      /* 라벨 조금 줄임 */
+  font-weight: 500;
+  margin: 11px 0 4px 0;
   color: #212529;
 }
 #taxReportForm input[type="text"],
 #taxReportForm input[type="date"],
 #taxReportForm select {
-  font-size: 1.13rem;        /* 입력칸 글씨 크게 */
-  padding: 15px 14px;        /* 입력칸 크기 넉넉히 */
-  border-radius: 11px;
-  margin-bottom: 8px;
+  font-size: 1.01rem;      /* 입력칸도 살짝 줄임 */
+  padding: 9px 10px;       /* 입력칸 높이, 여백도 줄임 */
+  border-radius: 8px;
+  margin-bottom: 5px;
   width: 100%;
   box-sizing: border-box;
 }
 #taxReportForm input[type="text"]:focus,
 #taxReportForm input[type="date"]:focus,
 #taxReportForm select:focus {
-  border: 2px solid #3b82f6;
-  background: #f2f8ff;
+  border: 1.5px solid #3b82f6;
+  background: #f7faff;
 }
+
