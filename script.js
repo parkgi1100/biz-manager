@@ -77,7 +77,9 @@ window.deleteEntry = function(idx) {
   renderInputTabList();
 }
 
-// ========== 대시보드/차트 등 (간단버전) ==========
+// ========== 대시보드/차트 등 ==========
+
+// 날짜범위 가져오기 (필터)
 function getDateRange() {
   let from = document.getElementById('fromDate').value;
   let to = document.getElementById('toDate').value;
@@ -107,9 +109,13 @@ window.setQuickPeriod = function(mode) {
   document.getElementById('toDate').value = to;
   renderAll();
 }
+
+// 날짜별 필터링
 function filterEntriesByDate(entries, from, to) {
   return entries.filter(e => e.date >= from && e.date <= to);
 }
+
+// 요약 합계 계산
 function summarize(entries) {
   let income = 0, expense = 0;
   for (const e of entries) {
@@ -118,6 +124,8 @@ function summarize(entries) {
   }
   return { income, expense, profit: income - expense };
 }
+
+// 베스트(매출/지출) top5
 function getBest(entries, type) {
   const map = {};
   for (const e of entries) if (e.type === type) {
@@ -128,15 +136,21 @@ function getBest(entries, type) {
     .sort((a,b)=>b[1]-a[1])
     .slice(0,5);
 }
+
+// 최근 거래 5개
 function getRecent(entries, limit=5) {
   return [...entries].sort((a,b)=>b.date.localeCompare(a.date)).slice(0, limit);
 }
+
+// 대시보드 요약 출력
 function renderSummary(filtered) {
   const s = summarize(filtered);
   document.getElementById('incomeSum').textContent = s.income.toLocaleString();
   document.getElementById('expenseSum').textContent = s.expense.toLocaleString();
   document.getElementById('profitSum').textContent = s.profit.toLocaleString();
 }
+
+// 베스트 매출/지출 출력
 function renderBest(filtered) {
   const incomeList = document.getElementById('bestIncomeList');
   incomeList.innerHTML = '';
@@ -149,6 +163,8 @@ function renderBest(filtered) {
     expenseList.innerHTML += `<li><span class="rank">🥇🥈🥉⭐️⭐️`[idx] + `</span>${e[0]}<span class="amount">${e[1].toLocaleString()}원</span></li>`;
   });
 }
+
+// 최근 거래 출력
 function renderRecent(filtered) {
   const ul = document.getElementById('recentList');
   ul.innerHTML = '';
@@ -162,6 +178,8 @@ function renderRecent(filtered) {
     </li>`;
   });
 }
+
+// 전체 대시보드 갱신
 function renderAll() {
   const [from, to] = getDateRange();
   const filtered = filterEntriesByDate(entries, from, to);
@@ -171,6 +189,8 @@ function renderAll() {
   renderChart(filtered);
   renderCompare(filtered, from, to);
 }
+
+// 차트 그리기
 let chartObj = null;
 function renderChart(filtered) {
   let dates = [];
@@ -204,25 +224,42 @@ function renderChart(filtered) {
     }
   });
 }
+
+// 기간 이동 (전년)
 function getPeriod(dateStr, diff, type='month') {
   const d = new Date(dateStr);
   if (type==='month') d.setMonth(d.getMonth() + diff);
   if (type==='year') d.setFullYear(d.getFullYear() + diff);
   return d.toISOString().slice(0,10);
 }
+
+// 비교 패널(전년 동기간만!)
 function renderCompare(filtered, from, to) {
-  const prevMonthFrom = getPeriod(from, -1, 'month');
-  const prevMonthTo = getPeriod(to, -1, 'month');
   const prevYearFrom = getPeriod(from, -1, 'year');
   const prevYearTo = getPeriod(to, -1, 'year');
   const sumByDate = (from, to) => summarize(
     entries.filter(e => e.date >= from && e.date <= to)
   );
-  const prevMonth = sumByDate(prevMonthFrom, prevMonthTo);
   const prevYear = sumByDate(prevYearFrom, prevYearTo);
   const now = summarize(filtered);
-  document.getElementById('prevMonthIncome').textContent = prevMonth.income.toLocaleString();
+
   document.getElementById('prevYearIncome').textContent = prevYear.income.toLocaleString();
-  const diff = now.income - prevMonth.income;
-  let per = prevMonth.income ? ((diff/prevMonth.income)*100).toFixed(1) : (now.income ? 100 : 0);
-  let arrow = diff > 0 ? "▲" : (diff < 0
+
+  // 변화: 전년 대비로만
+  const diff = now.income - prevYear.income;
+  let per = prevYear.income ? ((diff/prevYear.income)*100).toFixed(1) : (now.income ? 100 : 0);
+  let arrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "-");
+  document.getElementById('compareChange').textContent = 
+    (diff > 0 ? "+" : "") + diff.toLocaleString() + "원 (" + per + "%)";
+  document.getElementById('compareArrow').textContent = arrow;
+}
+
+// ========== 초기 렌더링 ==========
+window.onload = function() {
+  renderAll();
+  renderInputTabList();
+  // 입력탭 오늘날짜 기본값
+  const today = new Date().toISOString().slice(0,10);
+  const dateInput = document.getElementById('date');
+  if(dateInput) dateInput.value = today;
+};
