@@ -1,8 +1,7 @@
-// ======== 거래 데이터 (거래입력, 거래상세내역, 대시보드) ========
+// ======== 거래 데이터 ========
 let entries = JSON.parse(localStorage.getItem('entries') || "[]");
 function saveEntries() { localStorage.setItem('entries', JSON.stringify(entries)); }
 
-// 거래입력 추가
 window.addEntry = function(event) {
   event.preventDefault();
   const date = document.getElementById('date').value;
@@ -14,11 +13,11 @@ window.addEntry = function(event) {
   entries.push({ date, type, amount, category, memo });
   saveEntries();
   renderInputTabList();
-  renderAll(); // 대시보드 갱신
+  renderAll();
   event.target.reset();
 };
 
-// 최근 거래 리스트 (입력탭)
+// 거래입력(최근거래)
 function renderInputTabList() {
   const ul = document.getElementById('inputRecordList');
   if (!ul) return;
@@ -34,9 +33,7 @@ function renderInputTabList() {
   });
 }
 
-// =========== 대시보드 요약/차트 (대시보드 탭) ==========
-// 대시보드 구현은 네 원본 코드 유지하면 되고, 예시는 생략.
-// renderAll() 등 대시보드 갱신 함수 반드시 원본과 합쳐서 사용!
+// ======== 대시보드(요약/차트) (별도 함수로 유지) ========
 
 // ======= 거래상세내역 (기간조회/요약/내보내기) =======
 function filterTrans(entries, from, to) {
@@ -50,6 +47,17 @@ function summarizeTrans(entries) {
   }
   return { income, expense, profit: income - expense, count: entries.length };
 }
+
+// ✅ 요약부분 세로 배열
+function renderTransSummary(data) {
+  document.getElementById('transSummary').innerHTML = `
+    <div>수입: <span class="num">${data.income.toLocaleString()}원</span></div>
+    <div>지출: <span class="num">${data.expense.toLocaleString()}원</span></div>
+    <div>순이익: <span class="num">${data.profit.toLocaleString()}원</span></div>
+    <div>거래수: <span class="num">${data.count}건</span></div>
+  `;
+}
+
 function renderDetailTrans() {
   const all = JSON.parse(localStorage.getItem('entries') || "[]");
   let from = document.getElementById('transFromDate')?.value;
@@ -64,12 +72,7 @@ function renderDetailTrans() {
   }
   const filtered = filterTrans(all, from, to);
   const sum = summarizeTrans(filtered);
-  document.getElementById('transSummary').innerHTML = `
-    <b>수입:</b> ${sum.income.toLocaleString()}원 |
-    <b>지출:</b> ${sum.expense.toLocaleString()}원 |
-    <b>순이익:</b> ${sum.profit.toLocaleString()}원 |
-    <b>거래수:</b> ${sum.count}건
-  `;
+  renderTransSummary(sum); // ← 세로정렬 함수로 변경
   const ul = document.getElementById('detailTransList');
   ul.innerHTML = '';
   filtered.forEach(e => {
@@ -110,6 +113,7 @@ window.exportDetailTrans = function() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
 
 // ======= 세금계산서 관리/상세관리/내보내기 =======
 let taxEntries = JSON.parse(localStorage.getItem('taxEntries') || "[]");
@@ -152,6 +156,16 @@ function summarizeTax(entries) {
   }
   return { supply, tax, count: entries.length };
 }
+
+// ✅ 세금계산서상세 요약(세로)
+function renderTaxSummary(data) {
+  document.getElementById('taxSummary').innerHTML = `
+    <div>공급가액 합계: <span class="num">${data.supply.toLocaleString()}원</span></div>
+    <div>세액 합계: <span class="num">${data.tax.toLocaleString()}원</span></div>
+    <div>건수: <span class="num">${data.count}건</span></div>
+  `;
+}
+
 function renderTaxDetail() {
   const all = JSON.parse(localStorage.getItem('taxEntries') || "[]");
   let from = document.getElementById('taxFromDate')?.value;
@@ -166,11 +180,7 @@ function renderTaxDetail() {
   }
   const filtered = filterTax(all, from, to);
   const sum = summarizeTax(filtered);
-  document.getElementById('taxSummary').innerHTML = `
-    <b>공급가액 합계:</b> ${sum.supply.toLocaleString()}원 |
-    <b>세액 합계:</b> ${sum.tax.toLocaleString()}원 |
-    <b>건수:</b> ${sum.count}건
-  `;
+  renderTaxSummary(sum); // ← 세로정렬 함수로 변경
   const ul = document.getElementById('taxDetailList');
   ul.innerHTML = '';
   filtered.forEach(e => {
@@ -222,24 +232,36 @@ const taxReportFormats = {
     header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
     fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
   },
-  // ...업종 추가 가능!
+  norabang: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
+  carRepair: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
+  other: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
 };
 window.downloadTaxReport = function(event) {
   event.preventDefault();
-  // 입력값
   const bizName = document.getElementById('bizName').value.trim();
   const ownerName = document.getElementById('ownerName').value.trim();
   const bizNum = document.getElementById('bizNum').value.trim();
-  const bizType = document.getElementById('bizType').value;
+  const bizTypeSel = document.getElementById('bizType');
+  let bizType = bizTypeSel.value;
+  if(bizType === 'other') {
+    bizType = document.getElementById('bizTypeInput').value.trim() || '기타';
+  }
   const from = document.getElementById('reportFrom').value;
   const to = document.getElementById('reportTo').value;
   if (!bizType || !from || !to) return alert("필수값 입력!");
   const all = JSON.parse(localStorage.getItem('entries') || "[]");
   const filtered = all.filter(e => e.date >= from && e.date <= to);
-  // 타입 한글화
   filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
-  const format = taxReportFormats[bizType];
-  if (!format) return alert("업종포맷 없음!");
+  const format = taxReportFormats['cafe']; // 업종별 포맷이 다를 경우 활용 가능 (여기선 공통)
   let csv = [format.header.join(',')];
   filtered.forEach(e => {
     csv.push(format.fields.map(f=>{
@@ -285,5 +307,12 @@ function renderQnaList() {
   });
 }
 
-// ========== 설정탭(향후 로그인/백업/기타용) =========
-// 향후 추가/확장 예정!
+// ========== 업종 직접입력 (종합소득세 제출서류) ==========
+window.toggleBizTypeInput = function(sel) {
+  const input = document.getElementById('bizTypeInput');
+  if(sel.value === 'other') input.style.display = '';
+  else input.style.display = 'none';
+}
+
+// ========== onload 등 기타 ==========
+// (네 index.html에서 onload에 아래들 호출해주면 끝)
