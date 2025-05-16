@@ -358,4 +358,38 @@ auth.onAuthStateChanged(user => {
     document.getElementById('userEmail').textContent = "";
   }
 });
+// 로그인 팝업 열기/닫기
+function openLoginPopup() {
+  document.getElementById('loginPopup').classList.add('show');
+  document.addEventListener('mousedown', closeLoginPopupOutside);
+}
+function closeLoginPopup() {
+  document.getElementById('loginPopup').classList.remove('show');
+  document.removeEventListener('mousedown', closeLoginPopupOutside);
+}
+function closeLoginPopupOutside(e) {
+  if (!document.getElementById('loginPopup').contains(e.target) && !document.getElementById('loginMainBtn').contains(e.target)) {
+    closeLoginPopup();
+  }
+}
+document.getElementById('loginMainBtn').onclick = openLoginPopup;
+
+// 모바일 메뉴에서도
+window.openLoginPopup = openLoginPopup;
+
+// 로그인 성공 후: 팝업 자동 닫기
+function loginSuccess(email) {
+  document.getElementById('userEmail').textContent = email + " 로그인됨!";
+  closeLoginPopup();
+}
+
+// 소셜 로그인(구글, 카카오, 네이버) 함수 (아래 참고)
+document.getElementById('googleLoginBtn').onclick = function() {
+  // firebase auth 예시
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider)
+    .then(result => loginSuccess(result.user.email))
+    .catch(err => alert(err.message));
+};
+// 아래는 카카오, 네이버는 별도 OAuth 연동 필요!
 
