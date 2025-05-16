@@ -1,50 +1,108 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>1인 사업자 가계부</title>
-<link rel="stylesheet" href="style.css" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BizDash(임시)</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<h1>1인 사업자 가계부</h1>
+  <div class="mobile-frame">
+    <!-- 햄버거버튼 -->
+    <button id="toggleBtn" class="hamburger">≡</button>
+    <!-- 사이드바 -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header"><span>카테고리</span></div>
+      <ul>
+        <li><a href="#" class="active" onclick="showTab('dashboard')">대시보드</a></li>
+        <li><a href="#" onclick="showTab('input')">거래입력</a></li>
+        <li><a href="#" onclick="showTab('list')">거래내역</a></li>
+        <li><a href="#" onclick="showTab('settings')">설정</a></li>
+      </ul>
+    </nav>
+    <!-- 오버레이 -->
+    <div class="overlay" id="overlay"></div>
+    <!-- 메인컨텐츠 -->
+    <div class="main-content">
+      <!-- 대시보드 탭 -->
+      <div id="dashboardTab" class="tab active">
+        <h1>사업소득 대시보드</h1>
+        <div class="period-filter">
+          <input type="date" id="fromDate" />
+          <span>~</span>
+          <input type="date" id="toDate" />
+          <button onclick="setQuickPeriod('week')">최근7일</button>
+          <button onclick="setQuickPeriod('month')">이번달</button>
+          <button onclick="setQuickPeriod('year')">올해</button>
+        </div>
+        <div class="summary-panel">
+          <div><div>매출합계</div><div class="num" id="incomeSum">0</div></div>
+          <div><div>지출합계</div><div class="num" id="expenseSum">0</div></div>
+          <div><div>순이익</div><div class="num" id="profitSum">0</div></div>
+        </div>
+        <canvas id="trendChart" height="72"></canvas>
+        <div class="compare-panel">
+          <div>전월 동기간: <span id="prevMonthIncome">0</span></div>
+          <div>전년 동기간: <span id="prevYearIncome">0</span></div>
+          <div>변화: <span id="compareChange"></span> <span id="compareArrow"></span></div>
+        </div>
+        <div class="best-panel">
+          <h3>베스트 매출 TOP5</h3>
+          <ul id="bestIncomeList"></ul>
+          <h3>베스트 지출 TOP5</h3>
+          <ul id="bestExpenseList"></ul>
+        </div>
+        <div class="recent-entries">
+          <h3>최근 거래</h3>
+          <ul id="recentList"></ul>
+        </div>
+      </div>
+      <!-- 거래입력 탭 -->
+      <div id="inputTab" class="tab">
+        <h1>거래 입력</h1>
+        <form class="entry-form" onsubmit="addEntry(event)">
+          <input type="date" id="date" required />
+          <select id="type">
+            <option value="income">수입</option>
+            <option value="expense">지출</option>
+          </select>
+          <input type="number" id="amount" placeholder="금액" required />
+          <input type="text" id="category" placeholder="항목 (예: 식비, 매출 등)" />
+          <input type="text" id="memo" placeholder="메모(선택)" />
+          <button type="submit">추가하기</button>
+        </form>
+      </div>
+      <!-- 거래내역 탭 -->
+      <div id="listTab" class="tab">
+        <h1>거래 내역</h1>
+        <ul id="recordList"></ul>
+      </div>
+      <!-- 설정 탭 -->
+      <div id="settingsTab" class="tab">
+        <h1>설정</h1>
+        <p>로그인/백업/기타 예정</p>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+  <script>
+    // 햄버거/사이드바 토글
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const toggleBtn = document.getElementById('toggleBtn');
+    toggleBtn.onclick = () => { sidebar.classList.add('show'); overlay.classList.add('show'); }
+    overlay.onclick = () => { sidebar.classList.remove('show'); overlay.classList.remove('show'); }
 
-<section class="input-form">
-<h2>지출/수입 입력</h2>
-<input type="date" id="date" />
-<input type="text" id="category" placeholder="항목 (예: 식비, 매출 등)" />
-<input type="number" id="amount" placeholder="금액" />
-<select id="type">
-<option value="income">수입</option>
-<option value="expense">지출</option>
-</select>
-<input type="text" id="memo" placeholder="메모 (선택)" />
-<button onclick="addEntry()">추가하기</button>
-</section>
-
-<section class="chart-section">
-<h2>월별 요약 차트</h2>
-<canvas id="summaryChart" height="100"></canvas>
-</section>
-
-<section class="list-section">
-<h2>기록 목록</h2>
-<ul id="recordList"></ul>
-</section>
-
-<section class="tax-section">
-<h2>세금계산서 관리</h2>
-<input type="date" id="taxDate" />
-<input type="text" id="taxCompany" placeholder="거래처명" />
-<input type="number" id="supplyAmount" placeholder="공급가액" />
-<input type="number" id="taxAmount" placeholder="세액" />
-<input type="text" id="taxMemo" placeholder="메모 (선택)" />
-<button onclick="addTaxEntry()">세금계산서 추가</button>
-<ul id="taxList"></ul>
-</section>
-
-<script src="script.js"></script>
+    // 탭 전환
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+      document.querySelectorAll('.sidebar a').forEach(e => e.classList.remove('active'));
+      document.getElementById(tab + 'Tab').classList.add('active');
+      const idx = { dashboard: 0, input: 1, list: 2, settings: 3 }[tab];
+      document.querySelectorAll('.sidebar a')[idx].classList.add('active');
+      sidebar.classList.remove('show'); overlay.classList.remove('show');
+    }
+  </script>
 </body>
 </html>
