@@ -358,7 +358,7 @@ auth.onAuthStateChanged(user => {
     document.getElementById('userEmail').textContent = "";
   }
 });
-// 로그인 팝업 열기/닫기
+// --- 팝업 열기/닫기 함수 (window 전역) ---
 function openLoginPopup() {
   document.getElementById('loginPopup').classList.add('show');
   document.addEventListener('mousedown', closeLoginPopupOutside);
@@ -368,14 +368,55 @@ function closeLoginPopup() {
   document.removeEventListener('mousedown', closeLoginPopupOutside);
 }
 function closeLoginPopupOutside(e) {
-  if (!document.getElementById('loginPopup').contains(e.target) && !document.getElementById('loginMainBtn').contains(e.target)) {
+  if (
+    !document.getElementById('loginPopup').contains(e.target) &&
+    !document.getElementById('loginMainBtn').contains(e.target)
+  ) {
     closeLoginPopup();
   }
 }
-document.getElementById('loginMainBtn').onclick = openLoginPopup;
-
-// 모바일 메뉴에서도
 window.openLoginPopup = openLoginPopup;
+
+// --- onload에서 버튼 이벤트/초기화 모두 연결! ---
+window.onload = function() {
+  // 데이터 렌더링 함수들 호출
+  renderAll && renderAll();
+  renderInputTabList && renderInputTabList();
+  renderTaxList && renderTaxList();
+  renderDetailTrans && renderDetailTrans();
+  renderTaxDetail && renderTaxDetail();
+  renderQnaList && renderQnaList();
+
+  // ✅ 로그인 팝업/구글로그인 버튼 연결!
+  if(document.getElementById('loginMainBtn')) {
+    document.getElementById('loginMainBtn').onclick = openLoginPopup;
+  }
+  if(document.getElementById('googleLoginBtn')) {
+    document.getElementById('googleLoginBtn').onclick = function() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(result => loginSuccess(result.user.email))
+        .catch(err => alert(err.message));
+    }
+  }
+  // 로그아웃/상태 감지
+  if(document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').onclick = function() {
+      auth.signOut();
+    };
+  }
+  auth.onAuthStateChanged(user => {
+    if(user) {
+      document.getElementById('googleLoginBtn').style.display = "none";
+      if(document.getElementById('logoutBtn')) document.getElementById('logoutBtn').style.display = "";
+      document.getElementById('userEmail').textContent = user.email + " 로그인됨!";
+    } else {
+      document.getElementById('googleLoginBtn').style.display = "";
+      if(document.getElementById('logoutBtn')) document.getElementById('logoutBtn').style.display = "none";
+      document.getElementById('userEmail').textContent = "";
+    }
+  });
+}
 
 // 로그인 성공 후: 팝업 자동 닫기
 function loginSuccess(email) {
@@ -383,13 +424,8 @@ function loginSuccess(email) {
   closeLoginPopup();
 }
 
-// 소셜 로그인(구글, 카카오, 네이버) 함수 (아래 참고)
-document.getElementById('googleLoginBtn').onclick = function() {
-  // firebase auth 예시
-  const provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider)
-    .then(result => loginSuccess(result.user.email))
-    .catch(err => alert(err.message));
-};
-// 아래는 카카오, 네이버는 별도 OAuth 연동 필요!
+// 팝업 함수 등 전역 선언은 그대로 OK
 
+// -------------
+// *** 아래처럼 onload 바깥에 또 이벤트 연결하는 부분은 삭제! ***
+// document.getElementById('googleLoginBtn').onclick = function() { ... };
