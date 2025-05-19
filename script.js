@@ -360,3 +360,69 @@ window.downloadTaxReport = function(event) {
   const ownerName = document.getElementById('ownerName').value.trim();
   const bizNum = document.getElementById('bizNum').value.trim();
   const bizTypeSel = document.getElementBy
+  const bizTypeSel = document.getElementById('bizType');
+let bizType = bizTypeSel.value;
+if (bizType === 'other') {
+  bizType = document.getElementById('bizTypeInput').value.trim() || '기타';
+}
+const from = document.getElementById('reportFrom').value;
+const to = document.getElementById('reportTo').value;
+if (!bizType || !from || !to) return alert("필수값 입력!");
+const all = JSON.parse(localStorage.getItem('entries') || "[]");
+const filtered = all.filter(e => e.date >= from && e.date <= to);
+filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
+const format = taxReportFormats['cafe']; // 업종별 포맷 다를 시 적용
+let csv = [format.header.join(',')];
+filtered.forEach(e => {
+  csv.push(format.fields.map(f => {
+    if(f === "bizName") return bizName;
+    if(f === "ownerName") return ownerName;
+    if(f === "bizNum") return bizNum;
+    return e[f] || "";
+  }).map(v => `"${v}"`).join(','));
+});
+const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `종합소득세_${bizType}_${from}_${to}.csv`;
+document.body.appendChild(a); a.click(); document.body.removeChild(a);
+URL.revokeObjectURL(url);
+};
+
+// ========== 1:1문의사항 ==========
+let qnaEntries = JSON.parse(localStorage.getItem('qnaEntries') || "[]");
+function saveQnaEntries() { localStorage.setItem('qnaEntries', JSON.stringify(qnaEntries)); }
+window.addQna = function(event) {
+  event.preventDefault();
+  const title = document.getElementById('qnaTitle').value.trim();
+  const content = document.getElementById('qnaContent').value.trim();
+  const user = document.getElementById('qnaUser').value.trim();
+  if (!title || !content) return alert("제목/내용은 필수!");
+  qnaEntries.push({ title, content, user, date: new Date().toISOString().slice(0,16).replace('T',' ') });
+  saveQnaEntries();
+  renderQnaList();
+  event.target.reset();
+}
+function renderQnaList() {
+  const ul = document.getElementById('qnaList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  qnaEntries.slice(-10).reverse().forEach(e => {
+    ul.innerHTML += `<li>
+      <b>${e.title}</b> <span style="font-size:0.93em;">(${e.date})</span><br/>
+      <span>${e.content.replace(/\n/g, "<br/>")}</span>
+      ${e.user ? `<span style="color:#888;">- ${e.user}</span>` : ''}
+    </li>`;
+  });
+}
+
+// ========== 업종 직접입력 (종합소득세 제출서류) ==========
+window.toggleBizTypeInput = function(sel) {
+  const input = document.getElementById('bizTypeInput');
+  if(sel.value === 'other') input.style.display = '';
+  else input.style.display = 'none';
+}
+
+// ========== (추가/확장 필요시 여기에 더!) ==========
+
