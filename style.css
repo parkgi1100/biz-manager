@@ -606,3 +606,9 @@ canvas#trendChart {
 .logout-btn { margin-top:5px; width:100%; background:#f4f4f4; color:#222; border:1px solid #ccc; padding:10px 0; border-radius:7px; cursor:pointer; font-weight:600; transition:background 0.15s;}
 .logout-btn:hover { background:#dbeafe; color:#2563eb; }
 
+.profile-menu { position: absolute; top: 18px; right: 38px; z-index: 50; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
+.profile-dropdown { display: none; position: absolute; top: 44px; right: 0; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 16px 24px; min-width: 180px; }
+.profile-dropdown.show { display: block; }
+
+
