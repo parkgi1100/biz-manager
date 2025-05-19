@@ -424,4 +424,3 @@ window.toggleBizTypeInput = function(sel) {
 }
 
 // ========== (추가/확장 필요시 여기에 더!) ==========
-
