@@ -369,3 +369,46 @@ document.addEventListener('DOMContentLoaded', function() {
   // 로그아웃/상태 감지(옵션)
   // (네이버/카카오 로그인은 별도 구현 필요!)
 });
+
+// ---- 로그인 상태 감지/표시 ----
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // 프로필 사진 표시
+    document.getElementById('profileMenu').style.display = '';
+    document.getElementById('loginBox').style.display = 'none';
+    // 작은 아바타/큰 아바타
+    document.getElementById('userAvatar').src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
+    document.getElementById('userAvatarBig').src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
+    // 이메일/이름 표시
+    document.getElementById('profileEmail').textContent = user.email || '';
+    document.getElementById('profileName').textContent = user.displayName || '';
+  } else {
+    document.getElementById('profileMenu').style.display = 'none';
+    document.getElementById('loginBox').style.display = '';
+  }
+});
+
+// ---- 프로필 드롭다운 토글 ----
+function toggleProfileDropdown() {
+  const drop = document.getElementById('profileDropdown');
+  drop.classList.toggle('show');
+  if (drop.classList.contains('show')) {
+    document.addEventListener('mousedown', closeProfileDropdownOutside);
+  } else {
+    document.removeEventListener('mousedown', closeProfileDropdownOutside);
+  }
+}
+function closeProfileDropdownOutside(e) {
+  const drop = document.getElementById('profileDropdown');
+  if (!drop.contains(e.target) && !document.getElementById('userAvatar').contains(e.target)) {
+    drop.classList.remove('show');
+    document.removeEventListener('mousedown', closeProfileDropdownOutside);
+  }
+}
+window.toggleProfileDropdown = toggleProfileDropdown;
+
+// ---- 로그아웃 버튼 연결 ----
+document.getElementById('logoutBtn').onclick = function() {
+  auth.signOut();
+  document.getElementById('profileDropdown').classList.remove('show');
+};
