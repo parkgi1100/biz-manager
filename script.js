@@ -1,4 +1,4 @@
-// ======================= Firebase 인증 & 프로필 =======================
+// ========== Firebase 인증 & 프로필 ==============
 const firebaseConfig = {
   apiKey: "AIzaSyARw0VFLjUmCiNLODfBqL81ktyC4kdZOCk",
   authDomain: "biz-manager-68be3.firebaseapp.com",
@@ -51,7 +51,7 @@ function closeProfileDropdownOutside(e) {
 }
 window.toggleProfileDropdown = toggleProfileDropdown;
 
-// ========== 로그인 UI 상태 ==========
+// ====== 로그인 UI 상태 ======
 auth.onAuthStateChanged(user => {
   const loginBox = document.getElementById('loginBox');
   const profileBox = document.getElementById('profileBox');
@@ -62,7 +62,6 @@ auth.onAuthStateChanged(user => {
   const userProfileEmail = document.getElementById('userProfileEmail');
   const profileEmail = document.getElementById('profileEmail');
   const profileName = document.getElementById('profileName');
-
   if (user) {
     if (loginBox) loginBox.style.display = 'none';
     if (profileBox) profileBox.style.display = '';
@@ -88,36 +87,33 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// ========== 이벤트 바인딩 ==============
-document.addEventListener('DOMContentLoaded', function() {
-  // 로그아웃
-  if(document.getElementById('logoutBtn')) {
-    document.getElementById('logoutBtn').onclick = function() {
-      auth.signOut();
-      const drop = document.getElementById('profileDropdown');
-      if (drop) drop.classList.remove('show');
-    };
-  }
-  if(document.getElementById('loginMainBtn')) {
-    document.getElementById('loginMainBtn').onclick = openLoginPopup;
-  }
-  if(document.getElementById('googleLoginBtn')) {
-    document.getElementById('googleLoginBtn').onclick = function() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider)
-        .then(result => closeLoginPopup())
-        .catch(err => alert(err.message));
-    };
-  }
+// ========== 이벤트 바인딩 ==========
+if(document.getElementById('logoutBtn')) {
+  document.getElementById('logoutBtn').onclick = function() {
+    auth.signOut();
+    const drop = document.getElementById('profileDropdown');
+    if (drop) drop.classList.remove('show');
+  };
+}
+if(document.getElementById('loginMainBtn')) {
+  document.getElementById('loginMainBtn').onclick = openLoginPopup;
+}
+if(document.getElementById('googleLoginBtn')) {
+  document.getElementById('googleLoginBtn').onclick = function() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then(result => closeLoginPopup())
+      .catch(err => alert(err.message));
+  };
+}
   // (카카오/네이버는 추후 구현)
   // 데이터 렌더 함수
-  if(typeof renderAll === "function") renderAll();
-  if(typeof renderInputTabList === "function") renderInputTabList();
-  if(typeof renderTaxList === "function") renderTaxList();
-  if(typeof renderDetailTrans === "function") renderDetailTrans();
-  if(typeof renderTaxDetail === "function") renderTaxDetail();
-  if(typeof renderQnaList === "function") renderQnaList();
-});
+if(typeof renderAll === "function") renderAll();
+if(typeof renderInputTabList === "function") renderInputTabList();
+if(typeof renderTaxList === "function") renderTaxList();
+if(typeof renderDetailTrans === "function") renderDetailTrans();
+if(typeof renderTaxDetail === "function") renderTaxDetail();
+if(typeof renderQnaList === "function") renderQnaList();
 
 // ================= 거래 데이터 =================
 let entries = JSON.parse(localStorage.getItem('entries') || "[]");
