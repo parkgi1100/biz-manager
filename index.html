@@ -18,10 +18,24 @@
   <button id="loginMainBtn" class="login-btn">로그인</button>
   <span id="userEmail"></span>
 </div>
-<div class="profile-box" id="profileBox" style="display:none;">
-  <img id="userAvatar" class="user-avatar" src="" alt="프로필" style="width:32px; height:32px; border-radius:50%; object-fit:cover;" />
-  <span id="userProfileEmail"></span>
-  <button id="logoutBtn" class="logout-btn">로그아웃</button>
+<!-- 로그인 전 -->
+<div class="login-box" id="loginBox">
+  <button id="loginMainBtn" class="login-btn">로그인</button>
+</div>
+<!-- 로그인 후 (아바타만! 드롭다운 내장) -->
+<div class="profile-menu" id="profileMenu" style="display:none;">
+  <img id="userAvatar" class="user-avatar" src="" alt="프로필" onclick="toggleProfileDropdown()" />
+  <div id="profileDropdown" class="profile-dropdown">
+    <div class="profile-info">
+      <img id="userAvatarBig" src="" class="user-avatar-big" />
+      <div>
+        <div id="profileEmail" style="font-weight:600;"></div>
+        <div id="profileName" style="font-size:0.93em;color:#666;"></div>
+      </div>
+    </div>
+    <button id="logoutBtn" class="logout-btn">로그아웃</button>
+    <!-- 사업자 추가/내 정보/설정 등 추가 가능 -->
+  </div>
 </div>
 
 <!-- 2) 소셜로그인 선택 팝업 -->
