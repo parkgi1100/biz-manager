@@ -1,4 +1,17 @@
-// --- 팝업 열기/닫기 함수 (window 전역) ---
+// ======================= Firebase 인증 & 프로필 =======================
+const firebaseConfig = {
+  apiKey: "AIzaSyARw0VFLjUmCiNLODfBqL81ktyC4kdZOCk",
+  authDomain: "biz-manager-68be3.firebaseapp.com",
+  projectId: "biz-manager-68be3",
+  storageBucket: "biz-manager-68be3.firebasestorage.app",
+  messagingSenderId: "947454696313",
+  appId: "1:947454696313:web:4551bd4fafacb10b35eda8",
+  measurementId: "G-J8LGYTP9DC"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// ===== 팝업 함수 =====
 function openLoginPopup() {
   document.getElementById('loginPopup').classList.add('show');
   document.addEventListener('mousedown', closeLoginPopupOutside);
@@ -17,45 +30,96 @@ function closeLoginPopupOutside(e) {
 }
 window.openLoginPopup = openLoginPopup;
 
-// 로그인 성공 후: 팝업 자동 닫기
-function loginSuccess(email) {
-  document.getElementById('userEmail').textContent = email + " 로그인됨!";
-  closeLoginPopup();
-}
-
-// --- Firebase 초기화 ---
-const firebaseConfig = {
-  apiKey: "AIzaSyARw0VFLjUmCiNLODfBqL81ktyC4kdZOCk",
-  authDomain: "biz-manager-68be3.firebaseapp.com",
-  projectId: "biz-manager-68be3",
-  storageBucket: "biz-manager-68be3.firebasestorage.app",
-  messagingSenderId: "947454696313",
-  appId: "1:947454696313:web:4551bd4fafacb10b35eda8",
-  measurementId: "G-J8LGYTP9DC"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-auth.onAuthStateChanged(user => {
-  if (user) {
-    // 로그인 O
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('profileBox').style.display = '';
-    document.getElementById('userProfileEmail').textContent = (user.displayName ? user.displayName + " / " : "") + user.email;
-    document.getElementById('userAvatar').src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
+// ===== 프로필 드롭다운 =====
+function toggleProfileDropdown() {
+  const drop = document.getElementById('profileDropdown');
+  if (!drop) return;
+  drop.classList.toggle('show');
+  if (drop.classList.contains('show')) {
+    document.addEventListener('mousedown', closeProfileDropdownOutside);
   } else {
-    // 로그아웃
-    document.getElementById('loginBox').style.display = '';
-    document.getElementById('profileBox').style.display = 'none';
-    document.getElementById('userProfileEmail').textContent = '';
-    document.getElementById('userAvatar').src = '';
+    document.removeEventListener('mousedown', closeProfileDropdownOutside);
+  }
+}
+function closeProfileDropdownOutside(e) {
+  const drop = document.getElementById('profileDropdown');
+  if (!drop) return;
+  if (!drop.contains(e.target) && !document.getElementById('userAvatar').contains(e.target)) {
+    drop.classList.remove('show');
+    document.removeEventListener('mousedown', closeProfileDropdownOutside);
+  }
+}
+window.toggleProfileDropdown = toggleProfileDropdown;
+
+// ========== 로그인 UI 상태 ==========
+auth.onAuthStateChanged(user => {
+  const loginBox = document.getElementById('loginBox');
+  const profileBox = document.getElementById('profileBox');
+  const profileMenu = document.getElementById('profileMenu');
+  const userAvatar = document.getElementById('userAvatar');
+  const userAvatarBig = document.getElementById('userAvatarBig');
+  const userEmail = document.getElementById('userEmail');
+  const userProfileEmail = document.getElementById('userProfileEmail');
+  const profileEmail = document.getElementById('profileEmail');
+  const profileName = document.getElementById('profileName');
+
+  if (user) {
+    if (loginBox) loginBox.style.display = 'none';
+    if (profileBox) profileBox.style.display = '';
+    if (profileMenu) profileMenu.style.display = '';
+    if (userProfileEmail) userProfileEmail.textContent = (user.displayName ? user.displayName + " / " : "") + user.email;
+    if (userAvatar) userAvatar.src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
+    if (userAvatarBig) userAvatarBig.src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
+    if (profileEmail) profileEmail.textContent = user.email || '';
+    if (profileName) profileName.textContent = user.displayName || '';
+    if (userEmail) userEmail.textContent = ""; // 로그인 안내 제거
+  } else {
+    if (loginBox) loginBox.style.display = '';
+    if (profileBox) profileBox.style.display = 'none';
+    if (profileMenu) profileMenu.style.display = 'none';
+    if (userProfileEmail) userProfileEmail.textContent = '';
+    if (userAvatar) userAvatar.src = '';
+    if (userAvatarBig) userAvatarBig.src = '';
+    if (profileEmail) profileEmail.textContent = '';
+    if (profileName) profileName.textContent = '';
+    if (userEmail) userEmail.textContent = '';
+    const drop = document.getElementById('profileDropdown');
+    if (drop) drop.classList.remove('show');
   }
 });
 
-// 로그아웃 버튼 동작 연결
-document.getElementById('logoutBtn').onclick = function() {
-  auth.signOut();
-}
-// ======== 거래 데이터 ========
+// ========== 이벤트 바인딩 ==============
+document.addEventListener('DOMContentLoaded', function() {
+  // 로그아웃
+  if(document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').onclick = function() {
+      auth.signOut();
+      const drop = document.getElementById('profileDropdown');
+      if (drop) drop.classList.remove('show');
+    };
+  }
+  if(document.getElementById('loginMainBtn')) {
+    document.getElementById('loginMainBtn').onclick = openLoginPopup;
+  }
+  if(document.getElementById('googleLoginBtn')) {
+    document.getElementById('googleLoginBtn').onclick = function() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(result => closeLoginPopup())
+        .catch(err => alert(err.message));
+    };
+  }
+  // (카카오/네이버는 추후 구현)
+  // 데이터 렌더 함수
+  if(typeof renderAll === "function") renderAll();
+  if(typeof renderInputTabList === "function") renderInputTabList();
+  if(typeof renderTaxList === "function") renderTaxList();
+  if(typeof renderDetailTrans === "function") renderDetailTrans();
+  if(typeof renderTaxDetail === "function") renderTaxDetail();
+  if(typeof renderQnaList === "function") renderQnaList();
+});
+
+// ================= 거래 데이터 =================
 let entries = JSON.parse(localStorage.getItem('entries') || "[]");
 function saveEntries() { localStorage.setItem('entries', JSON.stringify(entries)); }
 window.addEntry = function(event) {
@@ -72,7 +136,6 @@ window.addEntry = function(event) {
   if (typeof renderAll === "function") renderAll();
   event.target.reset();
 };
-// 거래입력(최근거래)
 function renderInputTabList() {
   const ul = document.getElementById('inputRecordList');
   if (!ul) return;
@@ -87,7 +150,8 @@ function renderInputTabList() {
     </li>`;
   });
 }
-// ======= 거래상세내역 (기간조회/요약/내보내기) =======
+
+// ================= 거래상세내역 =================
 function filterTrans(entries, from, to) {
   return entries.filter(e => e.date >= from && e.date <= to);
 }
@@ -99,7 +163,6 @@ function summarizeTrans(entries) {
   }
   return { income, expense, profit: income - expense, count: entries.length };
 }
-// ✅ 요약부분 세로 배열
 function renderTransSummary(data) {
   document.getElementById('transSummary').innerHTML = `
     <div>수입: <span class="num">${data.income.toLocaleString()}원</span></div>
@@ -163,7 +226,8 @@ window.exportDetailTrans = function() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
-// ======= 세금계산서 관리/상세관리/내보내기 =======
+
+// ================= 세금계산서 관리/상세관리 =================
 let taxEntries = JSON.parse(localStorage.getItem('taxEntries') || "[]");
 function saveTaxEntries() { localStorage.setItem('taxEntries', JSON.stringify(taxEntries)); }
 window.addTaxEntry = function(event) {
@@ -204,7 +268,6 @@ function summarizeTax(entries) {
   }
   return { supply, tax, count: entries.length };
 }
-// ✅ 세금계산서상세 요약(세로)
 function renderTaxSummary(data) {
   document.getElementById('taxSummary').innerHTML = `
     <div>공급가액 합계: <span class="num">${data.supply.toLocaleString()}원</span></div>
@@ -267,14 +330,25 @@ window.exportTaxDetail = function() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
-// ========== 종합소득세 제출서류(내보내기) ==========
-// (중복 - 필요한 업종 header/fields만 아래 추가)
+
+// ========== 종합소득세 제출서류 내보내기 ==========
 const taxReportFormats = {
   cafe: {
     header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
     fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
   },
-  // ... 추가 업종 ...
+  mart: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
+  norabang: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
+  carRepair: {
+    header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
+    fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
+  },
   other: {
     header: ["사업자명","대표자명","사업자등록번호","일자","구분","항목","금액","메모"],
     fields: ["bizName","ownerName","bizNum","date","typeKor","category","amount","memo"]
@@ -285,130 +359,4 @@ window.downloadTaxReport = function(event) {
   const bizName = document.getElementById('bizName').value.trim();
   const ownerName = document.getElementById('ownerName').value.trim();
   const bizNum = document.getElementById('bizNum').value.trim();
-  const bizTypeSel = document.getElementById('bizType');
-  let bizType = bizTypeSel.value;
-  if(bizType === 'other') {
-    bizType = document.getElementById('bizTypeInput').value.trim() || '기타';
-  }
-  const from = document.getElementById('reportFrom').value;
-  const to = document.getElementById('reportTo').value;
-  if (!bizType || !from || !to) return alert("필수값 입력!");
-  const all = JSON.parse(localStorage.getItem('entries') || "[]");
-  const filtered = all.filter(e => e.date >= from && e.date <= to);
-  filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
-  const format = taxReportFormats['cafe']; // 업종별 포맷 다를 시 적용
-  let csv = [format.header.join(',')];
-  filtered.forEach(e => {
-    csv.push(format.fields.map(f=>{
-      if(f==="bizName") return bizName;
-      if(f==="ownerName") return ownerName;
-      if(f==="bizNum") return bizNum;
-      return e[f]||"";
-    }).map(v=>`"${v}"`).join(','));
-  });
-  const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `종합소득세_${bizType}_${from}_${to}.csv`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-// ====== 1:1문의사항 ======
-let qnaEntries = JSON.parse(localStorage.getItem('qnaEntries') || "[]");
-function saveQnaEntries() { localStorage.setItem('qnaEntries', JSON.stringify(qnaEntries)); }
-window.addQna = function(event) {
-  event.preventDefault();
-  const title = document.getElementById('qnaTitle').value.trim();
-  const content = document.getElementById('qnaContent').value.trim();
-  const user = document.getElementById('qnaUser').value.trim();
-  if (!title || !content) return alert("제목/내용은 필수!");
-  qnaEntries.push({ title, content, user, date: new Date().toISOString().slice(0,16).replace('T',' ') });
-  saveQnaEntries();
-  renderQnaList();
-  event.target.reset();
-}
-function renderQnaList() {
-  const ul = document.getElementById('qnaList');
-  if (!ul) return;
-  ul.innerHTML = '';
-  qnaEntries.slice(-10).reverse().forEach(e => {
-    ul.innerHTML += `<li>
-      <b>${e.title}</b> <span style="font-size:0.93em;">(${e.date})</span><br/>
-      <span>${e.content.replace(/\n/g, "<br/>")}</span>
-      ${e.user ? `<span style="color:#888;">- ${e.user}</span>` : ''}
-    </li>`;
-  });
-}
-// ========== 업종 직접입력 ==========
-window.toggleBizTypeInput = function(sel) {
-  const input = document.getElementById('bizTypeInput');
-  if(sel.value === 'other') input.style.display = '';
-  else input.style.display = 'none';
-}
-
-// ---- 모든 바인딩/초기화는 DOMContentLoaded에서! ----
-document.addEventListener('DOMContentLoaded', function() {
-  if(typeof renderAll === "function") renderAll();
-  if(typeof renderInputTabList === "function") renderInputTabList();
-  if(typeof renderTaxList === "function") renderTaxList();
-  if(typeof renderDetailTrans === "function") renderDetailTrans();
-  if(typeof renderTaxDetail === "function") renderTaxDetail();
-  if(typeof renderQnaList === "function") renderQnaList();
-
-  // 로그인 팝업/구글로그인 버튼 연결
-  const loginMainBtn = document.getElementById('loginMainBtn');
-  const googleLoginBtn = document.getElementById('googleLoginBtn');
-  if(loginMainBtn) loginMainBtn.onclick = openLoginPopup;
-  if(googleLoginBtn) googleLoginBtn.onclick = function() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-      .then(result => loginSuccess(result.user.email))
-      .catch(err => alert(err.message));
-  };
-  // 로그아웃/상태 감지(옵션)
-  // (네이버/카카오 로그인은 별도 구현 필요!)
-});
-
-// ---- 로그인 상태 감지/표시 ----
-auth.onAuthStateChanged(user => {
-  if (user) {
-    // 프로필 사진 표시
-    document.getElementById('profileMenu').style.display = '';
-    document.getElementById('loginBox').style.display = 'none';
-    // 작은 아바타/큰 아바타
-    document.getElementById('userAvatar').src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
-    document.getElementById('userAvatarBig').src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
-    // 이메일/이름 표시
-    document.getElementById('profileEmail').textContent = user.email || '';
-    document.getElementById('profileName').textContent = user.displayName || '';
-  } else {
-    document.getElementById('profileMenu').style.display = 'none';
-    document.getElementById('loginBox').style.display = '';
-  }
-});
-
-// ---- 프로필 드롭다운 토글 ----
-function toggleProfileDropdown() {
-  const drop = document.getElementById('profileDropdown');
-  drop.classList.toggle('show');
-  if (drop.classList.contains('show')) {
-    document.addEventListener('mousedown', closeProfileDropdownOutside);
-  } else {
-    document.removeEventListener('mousedown', closeProfileDropdownOutside);
-  }
-}
-function closeProfileDropdownOutside(e) {
-  const drop = document.getElementById('profileDropdown');
-  if (!drop.contains(e.target) && !document.getElementById('userAvatar').contains(e.target)) {
-    drop.classList.remove('show');
-    document.removeEventListener('mousedown', closeProfileDropdownOutside);
-  }
-}
-window.toggleProfileDropdown = toggleProfileDropdown;
-
-// ---- 로그아웃 버튼 연결 ----
-document.getElementById('logoutBtn').onclick = function() {
-  auth.signOut();
-  document.getElementById('profileDropdown').classList.remove('show');
-};
+  const bizTypeSel = document.getElementBy
