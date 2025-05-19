@@ -362,6 +362,7 @@ window.downloadTaxReport = function(event) {
   const bizTypeSel = document.getElementBy
   const bizTypeSel = document.getElementById('bizType');
 let bizType = bizTypeSel.value;
+let format = taxReportFormats[bizType] || taxReportFormats['other'];
 if (bizType === 'other') {
   bizType = document.getElementById('bizTypeInput').value.trim() || '기타';
 }
@@ -371,7 +372,6 @@ if (!bizType || !from || !to) return alert("필수값 입력!");
 const all = JSON.parse(localStorage.getItem('entries') || "[]");
 const filtered = all.filter(e => e.date >= from && e.date <= to);
 filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
-const format = taxReportFormats['cafe']; // 업종별 포맷 다를 시 적용
 let csv = [format.header.join(',')];
 filtered.forEach(e => {
   csv.push(format.fields.map(f => {
