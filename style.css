@@ -576,3 +576,18 @@ canvas#trendChart {
 }
 .mobile-login-menu { display: none; }
 
+.profile-box {
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid #e5e7eb; object-fit: cover;
+  background: #f1f1f3;
+}
+.logout-btn {
+  margin-left: 8px;
+  background: #f4f4f4; color: #222; border: 1px solid #ccc;
+  padding: 7px 16px; border-radius: 7px; cursor: pointer;
+  transition: background 0.15s;
+}
+.logout-btn:hover { background: #dbeafe; color: #2563eb; }
