@@ -359,7 +359,6 @@ window.downloadTaxReport = function(event) {
   const bizName = document.getElementById('bizName').value.trim();
   const ownerName = document.getElementById('ownerName').value.trim();
   const bizNum = document.getElementById('bizNum').value.trim();
-  const bizTypeSel = document.getElementBy
   const bizTypeSel = document.getElementById('bizType');
 let bizType = bizTypeSel.value;
 let format = taxReportFormats[bizType] || taxReportFormats['other'];
