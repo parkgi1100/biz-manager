@@ -37,6 +37,23 @@
     <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/naver.svg" alt="" /> 네이버 로그인
   </button>
 </div>
+<!-- 최상단, 네비 우측에 추가 -->
+<div class="profile-menu" id="profileMenu" style="display:none;">
+  <img id="userAvatar" class="user-avatar" src="" alt="프로필" onclick="toggleProfileDropdown()" />
+  <div id="profileDropdown" class="profile-dropdown">
+    <div class="profile-info">
+      <img id="userAvatarBig" src="" class="user-avatar-big" />
+      <div>
+        <div id="profileEmail" style="font-weight:600;"></div>
+        <div id="profileName" style="font-size:0.93em;color:#666;"></div>
+      </div>
+    </div>
+    <button id="logoutBtn" class="logout-btn">로그아웃</button>
+    <!-- 사업자 추가/내 정보/설정 등 추가 가능 -->
+  </div>
+</div>
+
+    
 
       <!-- ...기존 내용들... -->
     <div class="main-content">
