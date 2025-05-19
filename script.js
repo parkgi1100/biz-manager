@@ -35,7 +35,26 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // 로그인 O
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('profileBox').style.display = '';
+    document.getElementById('userProfileEmail').textContent = (user.displayName ? user.displayName + " / " : "") + user.email;
+    document.getElementById('userAvatar').src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
+  } else {
+    // 로그아웃
+    document.getElementById('loginBox').style.display = '';
+    document.getElementById('profileBox').style.display = 'none';
+    document.getElementById('userProfileEmail').textContent = '';
+    document.getElementById('userAvatar').src = '';
+  }
+});
 
+// 로그아웃 버튼 동작 연결
+document.getElementById('logoutBtn').onclick = function() {
+  auth.signOut();
+}
 // ======== 거래 데이터 ========
 let entries = JSON.parse(localStorage.getItem('entries') || "[]");
 function saveEntries() { localStorage.setItem('entries', JSON.stringify(entries)); }
