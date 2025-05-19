@@ -1,4 +1,4 @@
-// ========== Firebase 인증 & 프로필 ==============
+// ======================= Firebase 인증 & 프로필 =======================
 const firebaseConfig = {
   apiKey: "AIzaSyARw0VFLjUmCiNLODfBqL81ktyC4kdZOCk",
   authDomain: "biz-manager-68be3.firebaseapp.com",
@@ -51,7 +51,7 @@ function closeProfileDropdownOutside(e) {
 }
 window.toggleProfileDropdown = toggleProfileDropdown;
 
-// ====== 로그인 UI 상태 ======
+// ========== 로그인 UI 상태 ==========
 auth.onAuthStateChanged(user => {
   const loginBox = document.getElementById('loginBox');
   const profileBox = document.getElementById('profileBox');
@@ -71,7 +71,7 @@ auth.onAuthStateChanged(user => {
     if (userAvatarBig) userAvatarBig.src = user.photoURL || 'https://cdn.jsdelivr.net/gh/encharm/Font-Awesome-SVG-PNG/black/svg/user-circle.svg';
     if (profileEmail) profileEmail.textContent = user.email || '';
     if (profileName) profileName.textContent = user.displayName || '';
-    if (userEmail) userEmail.textContent = ""; // 로그인 안내 제거
+    if (userEmail) userEmail.textContent = "";
   } else {
     if (loginBox) loginBox.style.display = '';
     if (profileBox) profileBox.style.display = 'none';
@@ -420,3 +420,42 @@ window.toggleBizTypeInput = function(sel) {
 }
 
 // ========== (추가/확장 필요시 여기에 더!) ==========
+
+// =========== ★★ 제일 마지막에! ★★ ===========
+document.addEventListener('DOMContentLoaded', function() {
+  // 버튼/이벤트 바인딩
+  if(document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').onclick = function() {
+      auth.signOut();
+      const drop = document.getElementById('profileDropdown');
+      if (drop) drop.classList.remove('show');
+    };
+  }
+  if(document.getElementById('loginMainBtn')) {
+    document.getElementById('loginMainBtn').onclick = openLoginPopup;
+  }
+  if(document.getElementById('googleLoginBtn')) {
+    document.getElementById('googleLoginBtn').onclick = function() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(result => closeLoginPopup())
+        .catch(err => alert(err.message));
+    };
+  }
+  // 렌더 함수 실행
+  if(typeof renderAll === "function") renderAll();
+  if(typeof renderInputTabList === "function") renderInputTabList();
+  if(typeof renderTaxList === "function") renderTaxList();
+  if(typeof renderDetailTrans === "function") renderDetailTrans();
+  if(typeof renderTaxDetail === "function") renderTaxDetail();
+  if(typeof renderQnaList === "function") renderQnaList();
+});
+
+
+
+
+
+
+
+
+
