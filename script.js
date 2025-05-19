@@ -87,34 +87,6 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// ========== 이벤트 바인딩 ==========
-if(document.getElementById('logoutBtn')) {
-  document.getElementById('logoutBtn').onclick = function() {
-    auth.signOut();
-    const drop = document.getElementById('profileDropdown');
-    if (drop) drop.classList.remove('show');
-  };
-}
-if(document.getElementById('loginMainBtn')) {
-  document.getElementById('loginMainBtn').onclick = openLoginPopup;
-}
-if(document.getElementById('googleLoginBtn')) {
-  document.getElementById('googleLoginBtn').onclick = function() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-      .then(result => closeLoginPopup())
-      .catch(err => alert(err.message));
-  };
-}
-  // (카카오/네이버는 추후 구현)
-  // 데이터 렌더 함수
-if(typeof renderAll === "function") renderAll();
-if(typeof renderInputTabList === "function") renderInputTabList();
-if(typeof renderTaxList === "function") renderTaxList();
-if(typeof renderDetailTrans === "function") renderDetailTrans();
-if(typeof renderTaxDetail === "function") renderTaxDetail();
-if(typeof renderQnaList === "function") renderQnaList();
-
 // ================= 거래 데이터 =================
 let entries = JSON.parse(localStorage.getItem('entries') || "[]");
 function saveEntries() { localStorage.setItem('entries', JSON.stringify(entries)); }
@@ -356,33 +328,33 @@ window.downloadTaxReport = function(event) {
   const ownerName = document.getElementById('ownerName').value.trim();
   const bizNum = document.getElementById('bizNum').value.trim();
   const bizTypeSel = document.getElementById('bizType');
-let bizType = bizTypeSel.value;
-let format = taxReportFormats[bizType] || taxReportFormats['other'];
-if (bizType === 'other') {
-  bizType = document.getElementById('bizTypeInput').value.trim() || '기타';
-}
-const from = document.getElementById('reportFrom').value;
-const to = document.getElementById('reportTo').value;
-if (!bizType || !from || !to) return alert("필수값 입력!");
-const all = JSON.parse(localStorage.getItem('entries') || "[]");
-const filtered = all.filter(e => e.date >= from && e.date <= to);
-filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
-let csv = [format.header.join(',')];
-filtered.forEach(e => {
-  csv.push(format.fields.map(f => {
-    if(f === "bizName") return bizName;
-    if(f === "ownerName") return ownerName;
-    if(f === "bizNum") return bizNum;
-    return e[f] || "";
-  }).map(v => `"${v}"`).join(','));
-});
-const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `종합소득세_${bizType}_${from}_${to}.csv`;
-document.body.appendChild(a); a.click(); document.body.removeChild(a);
-URL.revokeObjectURL(url);
+  let bizType = bizTypeSel.value;
+  let format = taxReportFormats[bizType] || taxReportFormats['other'];
+  if (bizType === 'other') {
+    bizType = document.getElementById('bizTypeInput').value.trim() || '기타';
+  }
+  const from = document.getElementById('reportFrom').value;
+  const to = document.getElementById('reportTo').value;
+  if (!bizType || !from || !to) return alert("필수값 입력!");
+  const all = JSON.parse(localStorage.getItem('entries') || "[]");
+  const filtered = all.filter(e => e.date >= from && e.date <= to);
+  filtered.forEach(e => e.typeKor = (e.type === "income" ? "수입" : "지출"));
+  let csv = [format.header.join(',')];
+  filtered.forEach(e => {
+    csv.push(format.fields.map(f => {
+      if(f === "bizName") return bizName;
+      if(f === "ownerName") return ownerName;
+      if(f === "bizNum") return bizNum;
+      return e[f] || "";
+    }).map(v => `"${v}"`).join(','));
+  });
+  const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `종합소득세_${bizType}_${from}_${to}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 // ========== 1:1문의사항 ==========
@@ -419,18 +391,9 @@ window.toggleBizTypeInput = function(sel) {
   else input.style.display = 'none';
 }
 
-// ========== (추가/확장 필요시 여기에 더!) ==========
-
 // =========== ★★ 제일 마지막에! ★★ ===========
 document.addEventListener('DOMContentLoaded', function() {
-  // 버튼/이벤트 바인딩
-  if(document.getElementById('logoutBtn')) {
-    document.getElementById('logoutBtn').onclick = function() {
-      auth.signOut();
-      const drop = document.getElementById('profileDropdown');
-      if (drop) drop.classList.remove('show');
-    };
-  }
+  // 버튼 바인딩
   if(document.getElementById('loginMainBtn')) {
     document.getElementById('loginMainBtn').onclick = openLoginPopup;
   }
@@ -442,7 +405,15 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(err => alert(err.message));
     };
   }
-  // 렌더 함수 실행
+  if(document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').onclick = function() {
+      auth.signOut();
+      const drop = document.getElementById('profileDropdown');
+      if (drop) drop.classList.remove('show');
+    };
+  }
+
+  // 렌더 함수
   if(typeof renderAll === "function") renderAll();
   if(typeof renderInputTabList === "function") renderInputTabList();
   if(typeof renderTaxList === "function") renderTaxList();
@@ -450,12 +421,3 @@ document.addEventListener('DOMContentLoaded', function() {
   if(typeof renderTaxDetail === "function") renderTaxDetail();
   if(typeof renderQnaList === "function") renderQnaList();
 });
-
-
-
-
-
-
-
-
-
