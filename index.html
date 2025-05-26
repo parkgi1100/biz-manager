@@ -3,11 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BizDash 종합소득세 장부관리</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>BizDash - 간편장부</title> <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js"
+    integrity="sha384-kDljxUXHaJ9xAb2AzRd59KxjrFjzHa5TAiAVucYebYsB9YxMHJ3BTL1KNBcZ//sD" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript" src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" charset="utf-8"></script>
 </head>
 <body>
 
@@ -18,15 +26,13 @@
       <div id="loginBox" class="login-box">
         <button id="loginMainBtn" class="login-btn">로그인</button>
       </div>
-
       <div id="profileMenu" class="profile-menu" style="display:none;">
-        <img id="userAvatar" class="user-avatar" src="" alt="프로필" />
-        <div id="profileDropdown" class="profile-dropdown">
+        <img id="userAvatar" class="user-avatar" src="img/default-avatar.png" alt="프로필" /> <div id="profileDropdown" class="profile-dropdown">
           <div class="profile-info">
-            <img id="userAvatarBig" src="" class="user-avatar-big" alt="프로필사진"/>
+            <img id="userAvatarBig" src="img/default-avatar.png" class="user-avatar-big" alt="프로필사진"/>
             <div>
-              <div id="profileEmail" style="font-weight:600;"></div>
-              <div id="profileName" style="font-size:0.93em;color:#666;"></div>
+              <div id="profileEmail" class="profile-dropdown-text"></div>
+              <div id="profileName" class="profile-dropdown-text small"></div>
             </div>
           </div>
           <button id="logoutBtn" class="logout-btn">로그아웃</button>
@@ -35,249 +41,294 @@
     </div>
 
     <div class="login-popup" id="loginPopup">
-      <button class="social-btn" id="googleLoginBtn">
-        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" /> Google 로그인
+      <h3 class="popup-title">로그인</h3>
+      <button class="social-btn google" id="googleLoginBtn">
+        <img src="img/google-logo.svg" alt="Google logo" /> Google 계정으로 로그인
       </button>
-      <button class="social-btn" id="kakaoLoginBtn">
-        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/kakaotalk.svg" alt="Kakao logo" /> 카카오 로그인
+      <button class="social-btn kakao" id="kakaoLoginBtn">
+        <img src="img/kakao-logo.svg" alt="Kakao logo" /> 카카오 계정으로 로그인
       </button>
-      <button class="social-btn" id="naverLoginBtn">
-        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/naver.svg" alt="Naver logo" /> 네이버 로그인
+      <button class="social-btn naver" id="naverLoginBtn">
+        <img src="img/naver-logo.svg" alt="Naver logo" /> 네이버 아이디로 로그인
       </button>
+      <button class="close-popup-btn" id="closeLoginPopupBtn">닫기</button>
     </div>
     
-    <div class="main-content-wrapper"> <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header"><span>카테고리</span></div>
+    <div class="main-content-wrapper">
+      <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="img/logo-placeholder.png" alt="BizDash 로고" class="sidebar-logo"> <span>BizDash</span>
+        </div>
         <ul>
           <li><a href="#" class="active" onclick="showTab('dashboard')">대시보드</a></li>
           <li><a href="#" onclick="showTab('input')">거래입력</a></li>
-          <li><a href="#" onclick="showTab('detailTrans')">거래상세내역</a></li>
-          <li><a href="#" onclick="showTab('tax')">세금계산서 관리</a></li>
+          <li><a href="#" onclick="showTab('detailTrans')">거래내역</a></li>
+          <li><a href="#" onclick="showTab('tax')">세금계산서</a></li>
           <li><a href="#" onclick="showTab('taxDetail')">세금계산서 상세</a></li>
-          <li><a href="#" onclick="showTab('taxReport')">종합소득세 자료</a></li>
+          <li><a href="#" onclick="showTab('assets')">고정자산 관리</a></li> <li><a href="#" onclick="showTab('taxReport')">세무신고 자료</a></li>
           <li><a href="#" onclick="showTab('qna')">1:1문의</a></li>
           <li><a href="#" onclick="showTab('settings')">설정</a></li>
           <li class="mobile-login-menu" id="mobileLoginMenuContainer">
              <a href="#" id="mobileLoginLink">로그인</a>
           </li>
         </ul>
+        <div class="sidebar-footer">
+            <p>&copy; 2024 BizDash. All rights reserved.</p>
+        </div>
       </nav>
       <div class="overlay" id="overlay"></div>
 
       <div class="main-content" id="mainContentArea">
         <div id="dashboardTab" class="tab active">
-          <h1>사업소득 대시보드</h1>
-          <div class="period-filter">
-            <div class="date-row">
-              <input type="date" id="fromDate" />
-              <span>~</span>
-              <input type="date" id="toDate" />
+          <header class="tab-header">
+            <h1>대시보드</h1>
+            <div class="period-filter">
+                <div class="date-row">
+                  <input type="date" id="fromDate" aria-label="시작일"/>
+                  <span class="date-separator">~</span>
+                  <input type="date" id="toDate" aria-label="종료일"/>
+                </div>
+                <div class="quick-btn-row">
+                  <button type="button" data-period="week">최근7일</button>
+                  <button type="button" data-period="month">이번달</button>
+                  <button type="button" data-period="year" class="active">올해</button>
+                </div>
             </div>
-            <div class="quick-btn-row">
-              <button type="button" data-period="week">최근7일</button>
-              <button type="button" data-period="month">이번달</button>
-              <button type="button" data-period="year" class="active">올해</button>
+          </header>
+          
+          <div class="dashboard-grid">
+            <div class="summary-panel card">
+              <div class="summary-item">
+                <span class="summary-label">총 수입</span>
+                <span class="summary-value income" id="incomeSum">₩0</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">총 지출</span>
+                <span class="summary-value expense" id="expenseSum">₩0</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">순이익</span>
+                <span class="summary-value profit" id="profitSum">₩0</span>
+              </div>
             </div>
-          </div>
-          <div class="summary-panel">
-            <div><div>매출합계</div><div class="num" id="incomeSum">₩0</div></div>
-            <div><div>지출합계</div><div class="num" id="expenseSum">₩0</div></div>
-            <div><div>순이익</div><div class="num" id="profitSum">₩0</div></div>
-          </div>
-          <div class="chart-container">
-            <canvas id="trendChart"></canvas> </div>
-          <div class="compare-panel">
-            <div>전월 동기간: <span id="prevPeriodIncome">₩0</span></div>
-            <div>변화: <span id="compareChangePercentage">0%</span> <span id="compareChangeAmount">0</span> <span id="compareArrow"></span></div>
-          </div>
-          <div class="best-panel">
-            <h3>(기간) 베스트 항목</h3>
-            <ul id="bestItemsList">
+
+            <div class="chart-container card">
+              <h3>수익/비용 추이</h3>
+              <canvas id="trendChart"></canvas>
+            </div>
+
+            <div class="compare-panel card">
+              <h3>전년 동기 대비</h3>
+              <div>
+                <span id="prevPeriodLabel">전년 동기 수입:</span>
+                <strong id="prevPeriodIncome">₩0</strong>
+              </div>
+              <div class="comparison-details">
+                <span id="compareArrow" class="arrow up">▲</span> <span id="compareChangePercentage" class="positive">0%</span> (<span id="compareChangeAmount" class="positive">₩0</span>)
+              </div>
+            </div>
+
+            <div class="best-panel card">
+              <h3>주요 비용 항목 (Top 5)</h3>
+              <ul id="bestExpenseItemsList">
+                <li><span class="category-name">데이터 로딩 중...</span> <span class="amount"></span></li>
               </ul>
-          </div>
-          <div class="recent-entries">
-            <h3>최근 거래</h3>
-            <ul id="recentList"></ul>
+            </div>
+            
+            <div class="recent-entries card">
+              <h3>최근 거래 내역</h3>
+              <ul id="recentList">
+                <li>데이터 로딩 중...</li>
+              </ul>
+              <a href="#" class="view-all-link" onclick="showTab('detailTrans'); return false;">전체 거래내역 보기 &rarr;</a>
+            </div>
           </div>
         </div>
 
         <div id="inputTab" class="tab">
-          <h1>거래 입력</h1>
-          <form class="entry-form" id="addEntryForm">
-            <input type="date" id="date" required />
-            <select id="type">
-              <option value="income">수입</option>
-              <option value="expense">지출</option>
-            </select>
-            <input type="number" id="amount" placeholder="금액" required />
-            <input type="text" id="category" placeholder="항목 (예: 식비, 매출 등)" />
-            <input type="text" id="memo" placeholder="메모(선택)" />
-            <button type="submit">추가하기</button>
+          <header class="tab-header"><h1>거래 입력</h1></header>
+          <form class="entry-form card" id="addEntryForm">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="inputDate">거래일자*</label>
+                    <input type="date" id="inputDate" required />
+                </div>
+                <div class="form-group">
+                    <label for="inputType">구분*</label>
+                    <select id="inputType">
+                      <option value="income">수입</option>
+                      <option value="expense">지출</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inputAmount">금액*</label>
+                    <input type="number" id="inputAmount" placeholder="숫자만 입력" required />
+                </div>
+                <div class="form-group full-width">
+                    <label for="inputCategory">항목 (계정과목)*</label>
+                    <input type="text" id="inputCategory" placeholder="예: 상품 매출, 복리후생비" list="commonCategories" required/>
+                    <datalist id="commonCategories">
+                        <option value="상품 매출"></option>
+                        <option value="이자 수익"></option>
+                        <option value="급여"></option>
+                        <option value="복리후생비"></option>
+                        <option value="임차료"></option>
+                        <option value="광고선전비"></option>
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label for="inputCounterparty">거래처</label>
+                    <input type="text" id="inputCounterparty" placeholder="예: (주)한국상사" />
+                </div>
+                <div class="form-group">
+                    <label for="inputProofType">증빙종류</label>
+                    <select id="inputProofType">
+                        <option value="">선택안함</option>
+                        <option value="tax_invoice_e">전자세금계산서</option>
+                        <option value="tax_invoice_p">종이세금계산서</option>
+                        <option value="invoice_e">전자계산서</option>
+                        <option value="invoice_p">종이계산서</option>
+                        <option value="credit_card">신용카드매출전표</option>
+                        <option value="cash_receipt">현금영수증</option>
+                        <option value="receipt_simple">간이영수증</option>
+                        <option value="bank_transfer">계좌이체내역</option>
+                        <option value="other_proof">기타</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="inputMemo">메모 (적요)</label>
+                    <textarea id="inputMemo" placeholder="거래 상세 내용 (선택)"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="submit-btn">저장하기</button>
           </form>
-          <section class="input-list-section">
-            <h3>최근 입력 내역</h3>
+          <section class="input-list-section card">
+            <h3>최근 입력 내역 (10건)</h3>
             <ul id="inputRecordList"></ul>
           </section>
         </div>
+        
+        <div id="assetsTab" class="tab">
+            <header class="tab-header"><h1>고정자산 관리</h1></header>
+            <div class="card">
+                <p>고정자산 내역을 기록하고 감가상각을 관리합니다. (추후 개발 예정)</p>
+                </div>
+        </div>
 
         <div id="detailTransTab" class="tab">
-          <h1>거래상세내역</h1>
-          <form id="transPeriodForm">
-            <input type="date" id="transFromDate" required />
-            <span>~</span>
-            <input type="date" id="transToDate" required />
-            <button type="submit">조회</button>
+          <header class="tab-header"><h1>거래 상세내역</h1></header>
+          <form id="transPeriodForm" class="filter-form card">
+            <input type="date" id="transFromDate" aria-label="조회 시작일" />
+            <span class="date-separator">~</span>
+            <input type="date" id="transToDate" aria-label="조회 종료일" />
+            <button type="submit" class="filter-btn">조회</button>
           </form>
-          <div class="summary-panel column" id="transSummary"></div>
-          <button id="exportDetailTransBtn" class="export-btn">내보내기(엑셀/CSV)</button>
-          <ul id="detailTransList" class="data-list"></ul>
+          <div class="summary-panel column card" id="transSummary">
+            </div>
+          <div class="card data-table-container">
+            <button id="exportDetailTransBtn" class="export-btn">엑셀/CSV로 내보내기</button>
+            <ul id="detailTransList" class="data-list">
+                </ul>
+            </div>
         </div>
 
         <div id="taxTab" class="tab">
-          <h1>세금계산서 관리</h1>
-          <form class="entry-form" id="addTaxEntryForm">
-            <input type="date" id="taxDate" required />
-            <input type="text" id="taxCompany" placeholder="거래처명" required />
-            <input type="number" id="supplyAmount" placeholder="공급가액" required />
-            <input type="number" id="taxAmount" placeholder="세액" required />
-            <input type="text" id="taxMemo" placeholder="메모(선택)" />
-            <button type="submit">추가</button>
+          <header class="tab-header"><h1>세금계산서 관리</h1></header>
+          <form class="entry-form card" id="addTaxEntryForm">
+            <button type="submit" class="submit-btn">세금계산서 추가</button>
           </form>
-          <section class="input-list-section">
-            <h3>최근 세금계산서</h3>
+          <section class="input-list-section card">
+            <h3>최근 등록된 세금계산서</h3>
             <ul id="taxList"></ul>
           </section>
         </div>
-
+        
         <div id="taxDetailTab" class="tab">
-          <h1>세금계산서 상세</h1>
-          <form id="taxPeriodForm">
-            <input type="date" id="taxFromDate" required />
-            <span>~</span>
-            <input type="date" id="taxToDate" required />
-            <button type="submit">조회</button>
-          </form>
-          <div class="summary-panel column" id="taxSummary"></div>
-          <button id="exportTaxDetailBtn" class="export-btn">내보내기(엑셀/CSV)</button>
-          <ul id="taxDetailList" class="data-list"></ul>
-        </div>
-
+            <header class="tab-header"><h1>세금계산서 상세</h1></header>
+             </div>
         <div id="taxReportTab" class="tab">
-          <h1>종합소득세 자료</h1>
-          <form id="taxReportForm">
-            <div class="form-row">
-              <label for="bizName">사업자명</label>
-              <input type="text" id="bizName" required>
-            </div>
-            <div class="form-row">
-              <label for="ownerName">대표자명</label>
-              <input type="text" id="ownerName" required>
-            </div>
-            <div class="form-row">
-              <label for="bizNum">사업자등록번호</label>
-              <input type="text" id="bizNum" required>
-            </div>
-            <div class="form-row">
-              <label for="bizType">업종선택</label>
-              <select id="bizType">
-                <option value="">업종을 선택하세요</option>
-                <option value="cafe">카페</option>
-                <option value="mart">마트</option>
-                <option value="norabang">노래방</option>
-                <option value="carRepair">자동차수리</option>
-                <option value="other">직접입력</option>
-              </select>
-              <input type="text" id="bizTypeInput" placeholder="업종 직접입력" style="display:none;margin-left:8px;" />
-            </div>
-            <div class="form-row">
-              <label>기간</label>
-              <input type="date" id="reportFrom" required> ~
-              <input type="date" id="reportTo" required>
-            </div>
-            <button type="submit" class="export-btn full-width">국세청 제출용 내보내기</button>
-          </form>
-          <div id="reportGuide">
-            ⓘ 업종/기간/기본정보 입력 후 [내보내기]를 누르면 국세청 양식으로 파일 다운로드!
-          </div>
+            <header class="tab-header"><h1>세무신고 자료</h1></header>
+            <form id="taxReportForm" class="card">
+                <button type="submit" class="submit-btn full-width">국세청 제출용 자료 내보내기</button>
+            </form>
         </div>
-
         <div id="qnaTab" class="tab">
-          <h1>1:1문의</h1>
-          <form class="entry-form" id="addQnaForm">
-            <input type="text" id="qnaTitle" placeholder="제목" required />
-            <textarea id="qnaContent" placeholder="문의내용" required></textarea>
-            <input type="text" id="qnaUser" placeholder="작성자 (미입력시 프로필 정보 사용)" />
-            <button type="submit">문의등록</button>
-          </form>
-          <section class="input-list-section">
-            <h3>내 문의 내역</h3>
-            <ul id="qnaList"></ul>
-          </section>
+            <header class="tab-header"><h1>1:1 문의</h1></header>
+            <form class="entry-form card" id="addQnaForm">
+                <button type="submit" class="submit-btn">문의 등록</button>
+            </form>
+            <section class="input-list-section card">
+                <h3>내 문의 내역</h3>
+                <ul id="qnaList"></ul>
+            </section>
         </div>
-
         <div id="settingsTab" class="tab">
-          <h1>설정</h1>
-          <p>애플리케이션 설정을 변경할 수 있습니다. (추후 개발 예정)</p>
-          <p>데이터 백업/복원, 알림 설정, 테마 변경 등의 기능을 포함할 수 있습니다.</p>
+            <header class="tab-header"><h1>설정</h1></header>
+            <div class="card">
+                <p>애플리케이션 설정을 변경할 수 있습니다. (추후 개발 예정)</p>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <script>
-    // 사이드바 토글 및 탭 전환 로직 (인라인 스크립트 유지)
+      </div> </div> </div> <script>
+    // 인라인 스크립트 (탭 전환 및 사이드바 토글 로직 - 이전과 유사하게 유지)
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     const toggleBtn = document.getElementById('toggleBtn');
-    const mainContentArea = document.getElementById('mainContentArea'); // 메인 컨텐츠 영역
+    const mainContentArea = document.getElementById('mainContentArea');
 
     if (toggleBtn) {
       toggleBtn.onclick = () => {
         sidebar.classList.toggle('show');
         overlay.classList.toggle('show');
-        mainContentArea.classList.toggle('shifted'); // 메인 컨텐츠 밀기/당기기
+        // mainContentArea.classList.toggle('shifted'); // CSS에서 미디어쿼리로 제어
       };
     }
     if (overlay) {
       overlay.onclick = () => {
         sidebar.classList.remove('show');
         overlay.classList.remove('show');
-        mainContentArea.classList.remove('shifted');
+        // mainContentArea.classList.remove('shifted');
       };
     }
 
     function showTab(tabId) {
-      console.log('Showing tab:', tabId);
       document.querySelectorAll('.tab').forEach(tabElement => tabElement.classList.remove('active'));
       document.querySelectorAll('.sidebar a').forEach(linkElement => linkElement.classList.remove('active'));
 
       const activeTab = document.getElementById(tabId + 'Tab');
-      if (activeTab) {
-        activeTab.classList.add('active');
-      }
+      if (activeTab) activeTab.classList.add('active');
 
       const activeLink = document.querySelector(`.sidebar a[onclick="showTab('${tabId}')"]`);
-      if (activeLink) {
-        activeLink.classList.add('active');
-      }
-
-      // 사이드바 닫기 (모바일 환경 등에서 탭 선택 후 자동 닫힘)
-      if (sidebar && sidebar.classList.contains('show')) {
+      if (activeLink) activeLink.classList.add('active');
+      
+      if (sidebar && sidebar.classList.contains('show') && window.innerWidth < 768) { // 모바일에서 탭 선택 시 사이드바 닫기
         sidebar.classList.remove('show');
         overlay.classList.remove('show');
-        mainContentArea.classList.remove('shifted');
+        // mainContentArea.classList.remove('shifted');
       }
 
-      // 각 탭에 맞는 데이터 렌더링 함수 호출 (script.js에 정의된 함수 사용)
       if (typeof window.renderFunctionForTab === 'function') {
         window.renderFunctionForTab(tabId);
       }
     }
-    // 초기 로드 시 대시보드 탭 활성화
+    
     document.addEventListener('DOMContentLoaded', () => {
-        showTab('dashboard');
+        // URL 해시 기반으로 초기 탭 설정 또는 기본 대시보드
+        const initialTab = window.location.hash ? window.location.hash.substring(1) : 'dashboard';
+        const validTabs = ['dashboard', 'input', 'detailTrans', 'tax', 'taxDetail', 'assets', 'taxReport', 'qna', 'settings'];
+        if (validTabs.includes(initialTab)) {
+            showTab(initialTab);
+        } else {
+            showTab('dashboard');
+        }
+        // 탭 클릭 시 URL 해시 변경 (선택적: 뒤로가기/새로고침 시 탭 유지)
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const tabName = this.getAttribute('onclick').match(/showTab\('([^']+)'\)/)[1];
+                if (tabName) window.location.hash = tabName;
+            });
+        });
     });
   </script>
- <script src="script.js"></script>
-</body>
+ <script src="script.js"></script> </body>
 </html>
