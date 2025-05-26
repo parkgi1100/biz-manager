@@ -1,7 +1,14 @@
 // BizDash - script.js (최종 수정 제안)
 
 // ======================= Firebase 설정 =======================
-const firebaseConfig = { /* ★★★ 이전과 동일, 실제 키 입력 필수 ★★★ */ };
+const firebaseConfig = {  
+  apiKey: "AIzaSyBYAUvi4e6ZTwjkwTgbBKWmIMXG7mK_Wt8", // ← ★★★ 여기 ★★★
+  authDomain: "실제_Auth_도메인으로_교체",
+  projectId: "실제_프로젝트_ID로_교체",
+  storageBucket: "실제_스토리지_버킷으로_교체",
+  messagingSenderId: "실제_메시징_SENDER_ID로_교체",
+  appId: "실제_앱_ID로_교체",
+  measurementId: "실제_측정_ID로_교체" // Optional};
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
