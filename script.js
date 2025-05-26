@@ -1,14 +1,15 @@
 // BizDash - script.js (최종 수정 제안)
 
 // ======================= Firebase 설정 =======================
-const firebaseConfig = {  
-  apiKey: "AIzaSyBYAUvi4e6ZTwjkwTgbBKWmIMXG7mK_Wt8", // ← ★★★ 여기 ★★★
-  authDomain: "실제_Auth_도메인으로_교체",
-  projectId: "실제_프로젝트_ID로_교체",
-  storageBucket: "실제_스토리지_버킷으로_교체",
-  messagingSenderId: "실제_메시징_SENDER_ID로_교체",
-  appId: "실제_앱_ID로_교체",
-  measurementId: "실제_측정_ID로_교체" // Optional};
+const firebaseConfig = {
+  apiKey: "AIzaSyDIW89Y0Z5JPG4dBjoIDAofgy4XlAmQ7Jw",
+  authDomain: "bizdash-7c6fd.firebaseapp.com",
+  projectId: "bizdash-7c6fd",
+  storageBucket: "bizdash-7c6fd.firebasestorage.app",
+  messagingSenderId: "765405833459",
+  appId: "1:765405833459:web:750f2189c77ac0353c2f86",
+  measurementId: "G-W31FKJJSSG"
+};
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
