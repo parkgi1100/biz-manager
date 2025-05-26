@@ -1,652 +1,355 @@
+/* BizDash - style.css */
 :root {
-  --main-color: #212529;
-  --accent-color: #3b82f6; /* 목표 이미지의 파란색 계열 */
-  --expense-color: #ef4444; /* 지출 빨간색 */
-  --income-color: #22c55e; /* 수입 초록색 */
-  --bg-color: #f4f4f7; /* 페이지 배경색, 목표 이미지와 유사하게 조정 */
-  --frame-width: 500px;
-  --frame-radius: 28px; /* 데스크탑에서 프레임 둥글기 */
-  --sidebar-width: 260px; /* 사이드바 너비 */
-  --sidebar-max-width: 80vw; /* 모바일 최대 사이드바 너비 */
-  --shadow: 0 4px 24px rgba(0,0,0,0.08); /* 그림자 약간 부드럽게 */
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.05); /* 더 부드러운 그림자 */
-  --transition: 0.22s cubic-bezier(.4,0,.2,1);
-  --card-radius: 16px; /* 카드 모서리 둥글기, 목표 이미지에 맞게 조정 */
-  --text-main: #333333;
-  --text-light: #666666;
-  --border-color: #e5e7eb;
+  --main-font: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --accent-color: #007AFF;  /* iOS 스타일 블루 / 좀 더 밝고 모던한 파랑 */
+  --accent-color-dark: #0056b3;
+  --text-main: #2c3e50;     /* 주요 텍스트 (더 진하게) */
+  --text-light: #57606f;    /* 보조 텍스트 */
+  --text-on-accent: #ffffff;
+  --bg-color: #f4f6f8;      /* 페이지 배경 (약간 푸른빛 도는 밝은 회색) */
+  --content-bg: #ffffff;    /* 카드 등 컨텐츠 배경 */
+  --border-color: #dfe4ea;  /* 테두리 (더 연하게) */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.06);
+  --shadow-lg: 0 15px 30px rgba(0,0,0,0.08);
+  --frame-width: 550px;     /* 최대 프레임 너비 약간 넓힘 */
+  --frame-radius: 12px;     /* 데스크탑에서 프레임 둥글기 */
+  --card-radius: 10px;      /* 카드 둥글기 */
+  --sidebar-width: 260px;
+  --header-height: 60px;    /* 상단 고정 영역 높이 */
+  --input-height: 44px;     /* 입력 필드 높이 */
+  --button-height: 44px;    /* 버튼 높이 */
+  --income-color: #28a745;  /* 수입 (선명한 초록) */
+  --expense-color: #dc3545; /* 지출 (선명한 빨강) */
+  --profit-color: var(--accent-color); /* 순이익 (강조색) */
+  --transition: 0.2s ease-in-out;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
   background: var(--bg-color);
-  min-height: 100vh;
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* 프레임이 길어질 수 있으므로 상단 정렬 */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; /* 시스템 폰트 우선 사용 */
+  font-family: var(--main-font);
   color: var(--text-main);
-  line-height: 1.5; /* 가독성을 위한 줄 간격 */
+  line-height: 1.6;
+  display: flex; justify-content: center; align-items: flex-start;
+  min-height: 100vh;
 }
 
-/* 모바일 프레임 */
 .mobile-frame {
-  position: relative;
-  width: var(--frame-width);
-  max-width: 100vw;
-  min-height: 100vh;
-  background: #fff; /* 프레임 배경 흰색 */
-  box-shadow: var(--shadow);
-  overflow-x: hidden; /* 가로 스크롤 방지 */
-  overflow-y: auto; /* 내용 많을 시 세로 스크롤 */
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 30px;
+  position: relative; width: 100%; max-width: var(--frame-width);
+  min-height: 100vh; background: var(--content-bg);
+  box-shadow: var(--shadow-lg);
+  overflow-x: hidden; overflow-y: auto;
+  display: flex; flex-direction: column;
 }
-@media (min-width: 530px) { /* 데스크탑 느낌을 위해 */
-    .mobile-frame {
-        margin-top: 20px; margin-bottom: 20px;
-        border-radius: var(--frame-radius); 
-        min-height: calc(100vh - 40px); /* 위아래 여백 고려 */
-    }
+@media (min-width: 600px) {
+  .mobile-frame { margin: 20px 0; border-radius: var(--frame-radius); min-height: calc(100vh - 40px); }
 }
 
-
-/* 햄버거버튼 */
+/* === 헤더, 네비게이션, 로그인 UI === */
 .hamburger {
-  position: absolute; /* .mobile-frame 기준 */
-  left: 18px; top: 18px; /* 위치 조정 */
-  z-index: 1002; /* 사이드바보다 위 */
-  background: var(--accent-color);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 44px; /* 크기 약간 조정 */
-  height: 44px;
-  font-size: 1.4rem; /* 아이콘 크기 */
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
+  position: fixed; left: 15px; top: 15px; z-index: 1020;
+  background: var(--accent-color); color: var(--text-on-accent);
+  border: none; border-radius: 50%; width: 40px; height: 40px;
+  font-size: 1.3rem; cursor: pointer; box-shadow: var(--shadow-md);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition), transform var(--transition);
 }
-.hamburger:hover {
-  background: #2563eb; /* 좀 더 진한 파랑 */
-}
+.hamburger:hover { background: var(--accent-color-dark); transform: rotate(90deg); }
 
-/* 슬라이드 사이드바 */
-.sidebar {
-  position: fixed; /* 화면 기준 고정 */
-  left: 0; top: 0; bottom: 0;
-  width: var(--sidebar-width);
-  max-width: var(--sidebar-max-width);
-  height: 100%;
-  background: #fff;
-  box-shadow: 0 0 25px rgba(0,0,0,0.1); /* 사이드바 그림자 */
-  border-right: 1px solid var(--border-color);
-  transform: translateX(-100%);
-  transition: transform var(--transition);
-  z-index: 1001; /* 햄버거 버튼보다 아래 */
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* 내부 요소 간격 */
-  padding: 20px 0;
+.auth-area {
+  position: fixed; top: 15px; right: 15px; z-index: 1020; display: flex; align-items: center;
 }
-.sidebar.show {
-  transform: translateX(0);
+.login-box { display: flex; }
+.login-btn {
+  background: var(--content-bg); border: 1px solid var(--border-color); color: var(--accent-color);
+  border-radius: 20px; font-size: 0.85rem; font-weight: 500; padding: 8px 18px;
+  cursor: pointer; box-shadow: var(--shadow-sm); transition: all var(--transition);
 }
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  font-size: 1.1rem; /* 약간 작게 */
-  font-weight: 600; /* 두껍게 */
-  padding: 10px 25px 15px 25px; /* 패딩 조정 */
-  color: var(--text-main);
-}
-.sidebar ul {
-  list-style: none;
-  margin: 0; padding: 0 15px; /* 좌우 패딩 */
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* 메뉴 간격 */
-}
-.sidebar a {
-  text-decoration: none;
-  color: var(--text-light); /* 기본 글자색 */
-  font-weight: 500;
-  padding: 12px 20px; /* 패딩 */
-  border-radius: 10px; /* 둥글기 */
-  font-size: 0.95rem; /* 폰트 크기 */
-  display: block;
-  transition: background 0.16s, color 0.13s;
-}
-.sidebar a.active, .sidebar a:hover {
-  background: var(--accent-color);
-  color: #fff;
-}
+.login-btn:hover { background: var(--accent-color); color: var(--text-on-accent); border-color: var(--accent-color); }
 
-/* 오버레이 */
-.overlay {
-  display: none;
-  position: fixed; /* 화면 전체 커버 */
-  left: 0; top: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.3); /* 약간 더 어둡게 */
-  z-index: 1000; /* 사이드바 바로 아래 */
-}
-.overlay.show {
-  display: block;
-}
-
-/* 메인 컨텐츠 */
-.main-content {
-  padding: 70px 20px 30px 20px; /* 상단 고정 헤더/햄버거 고려하여 top padding */
-  max-width: 100%;
-  width: 100%;
-  flex-grow: 1; /* 프레임 내에서 남은 공간 차지 */
-}
-/* 사이드바 열렸을 때 메인 컨텐츠 밀리는 효과는 JS에서 .shifted 클래스로 제어 */
-@media (min-width: 601px) { /* 데스크탑에서만 밀리도록 */
-    .main-content.shifted {
-        padding-left: calc(var(--sidebar-width) + 20px);
-    }
-}
-
-
-/* 탭 기본 */
-.tab { display: none; animation: fadeIn 0.3s ease-out; }
-.tab.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px);} to { opacity: 1; transform: translateY(0);}}
-
-/* 카드형 section (공통 스타일) */
-.period-filter, /* 기간필터도 카드 스타일 적용 */
-.summary-panel, 
-.chart-container, /* 차트 감싸는 div도 카드 스타일 */
-.compare-panel, 
-.best-panel, 
-.recent-entries,
-.entry-form, /* 입력폼도 카드 스타일 */
-.input-list-section, /* 입력폼 하단 목록도 카드 스타일 */
-#transSummary, /* 거래상세 요약도 카드 스타일 */
-#taxSummary, /* 세금계산서 요약도 카드 스타일 */
-#reportGuide /* 안내문구도 카드 스타일 */
- {
-  background: #fff; /* 카드 배경 흰색으로 변경 */
-  border: 1px solid var(--border-color); /* 테두리 추가 */
-  border-radius: var(--card-radius);
-  padding: 20px; /* 패딩 일관성 있게 조정 */
-  margin-bottom: 20px; /* 카드 간 간격 */
-  box-shadow: var(--shadow-sm); /* 부드러운 그림자 */
-  max-width: 100%;
-  width: 100%;
-  /* overflow-x: hidden; /* 내부 컨텐츠가 넘칠 경우를 대비 */
-}
-.chart-container { padding: 15px; } /* 차트 컨테이너는 패딩 약간 작게 */
-
-
-h1 { /* 페이지 제목 */
-  font-size: 1.6rem; /* 약간 작게 */
-  margin-top: 0; /* main-content 패딩으로 조절되므로 */
-  margin-bottom: 20px; /* 아래 요소와의 간격 */
-  color: var(--main-color);
-  text-align: left;
-  letter-spacing: -0.5px; /* 자간 약간 줄임 */
-  font-weight: 600; /* 두껍게 */
-}
-h3 { /* 카드 내부 섹션 제목 */
-  font-size: 1.05rem; /* 조정 */
-  color: var(--text-main); /* 더 진하게 */
-  margin: 0 0 15px 0; /* 위쪽 마진 제거, 아래쪽 간격 */
-  font-weight: 600;
-}
-
-/* 기간 필터 */
-.period-filter {
-  display: flex;
-  flex-direction: column;
-  gap: 12px; /* 내부 요소 간격 */
-}
-.period-filter .date-row {
-  display: flex;
-  align-items: center;
-  gap: 10px; /* 날짜 입력 간격 */
-  width: 100%;
-  flex-wrap: wrap; /* 창이 작을 때 줄바꿈 */
-}
-.period-filter input[type="date"] {
-  flex: 1; /* 가능한 공간 차지 */
-  min-width: 130px; /* 최소 너비 */
-  font-size: 0.9rem; /* 폰트 크기 */
-  padding: 10px 12px; /* 패딩 */
-  border-radius: 8px; /* 둥글기 */
-  border: 1px solid var(--border-color); /* 테두리 */
-  background: #fff;
-  color: var(--text-main);
-  transition: border 0.17s;
-  outline: none;
-}
-.period-filter input[type="date"]:focus {
-  border-color: var(--accent-color); /* 포커스 시 강조 */
-  background: #f7faff;
-}
-.period-filter .quick-btn-row {
-  display: flex;
-  gap: 8px; /* 버튼 간격 */
-}
-.period-filter .quick-btn-row button {
-  background: #f0f2f5; /* 기본 배경색 */
-  color: var(--accent-color);
-  border: 1px solid transparent; /* 테두리 공간 확보 */
-  border-radius: 8px;
-  padding: 8px 15px; /* 패딩 */
-  font-weight: 500;
-  font-size: 0.9rem; /* 폰트 크기 */
-  cursor: pointer;
-  transition: background 0.14s, color 0.14s, border-color 0.14s;
-}
-.period-filter .quick-btn-row button:hover {
-  background: #e9effb; /* 호버 시 배경 */
-  border-color: #d0dfff;
-}
-.period-filter .quick-btn-row button.active { /* 활성 버튼 스타일 */
-  background: var(--accent-color);
-  color: #fff;
-  font-weight: 600;
-  border-color: var(--accent-color);
-}
-
-/* 요약판넬 */
-.summary-panel {
-  display: flex;
-  justify-content: space-around; /* 공간 균등 분배 */
-  align-items: stretch;
-  gap: 15px; /* 카드 간 간격 */
-  flex-wrap: wrap; /* 작은 화면에서 줄바꿈 */
-  /* background 제거 (개별 카드가 배경을 가짐) */
-  /* padding 제거 (개별 카드가 패딩을 가짐) */
-}
-.summary-panel > div { /* 개별 요약 카드 (매출, 지출, 순이익) */
-  flex: 1; /* 동일한 너비 */
-  min-width: 120px; /* 최소 너비, 창 크기에 따라 조절 */
-  text-align: center;
-  background: #fff; /* 각 카드 배경은 흰색 */
-  border-radius: 12px; /* 목표 이미지와 유사하게 */
-  padding: 18px 10px; /* 내부 패딩 조정 */
-  box-shadow: var(--shadow-sm); /* 그림자 */
-  border: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* 내용 수직 중앙 정렬 */
-  gap: 5px; /* 레이블과 숫자 간 간격 */
-}
-.summary-panel > div > div:first-child { /* 레이블 (매출합계 등) */
-  font-size: 0.85rem; /* 목표 이미지에 맞게 작게 */
-  font-weight: 500;
-  color: var(--text-light); /* 연한 색 */
-}
-.summary-panel .num {
-  font-size: 1.4rem; /* 목표 이미지에 맞게 키움 */
-  font-weight: 700;
-  line-height: 1.2; /* 숫자가 클 때 줄간격 */
-  white-space: nowrap; /* 한 줄로 표시 시도 */
-  overflow: hidden;
-  text-overflow: ellipsis; /* 넘치면 ... */
-}
-/* 색상 지정: JS에서 ID로 직접 지정하거나 클래스 부여 방식 사용 */
-#incomeSum { color: var(--accent-color); } /* 매출은 기본 파란색 */
-#expenseSum { color: var(--expense-color); } /* 지출은 빨간색 */
-#profitSum { color: var(--income-color); } /* 순이익은 초록색 */
-
-
-/* 차트 */
-canvas#trendChart {
-  width: 100% !important;
-  min-width: 0;
-  max-width: 100% !important;
-  height: 220px !important; /* 목표 디자인에 맞게 높이 설정 */
-  display: block;
-  box-sizing: border-box;
-  margin-top: 10px; /* 위쪽 여백 */
-  /* background, box-shadow, border-radius는 .chart-container에서 처리 */
-}
-
-/* 비교판넬 */
-.compare-panel {
-  display: flex;
-  gap: 15px; /* 간격 조정 */
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.95rem; /* 기본 폰트 크기 */
-  /* background, color, padding 은 카드 공통 스타일 따름 */
-}
-.compare-panel > div:first-child { /* "전월 동기간: 금액" 부분 */
-    color: var(--text-light);
-}
-.compare-panel > div:first-child span { /* 금액 부분 */
-  font-weight: 600;
-  color: var(--text-main); /* 금액은 기본 텍스트 색 */
-}
-.compare-panel > div:last-child { /* 변화율 부분 */
-    text-align: right;
-}
-.compare-panel .change-value, /* JS에서 이 클래스 사용 고려 */
-.compare-panel #compareChangePercentage, 
-.compare-panel #compareChangeAmount {
-  font-weight: 600;
-  font-size: 1rem; /* 강조 */
-}
-/* JS에서 .positive 또는 .negative 클래스 부여 필요 */
-.compare-panel #compareArrow.positive,
-.compare-panel #compareChangePercentage.positive,
-.compare-panel #compareChangeAmount.positive {
-  color: var(--income-color);
-}
-.compare-panel #compareArrow.negative,
-.compare-panel #compareChangePercentage.negative,
-.compare-panel #compareChangeAmount.negative {
-  color: var(--expense-color);
-}
-
-
-/* 베스트 항목 */
-.best-panel ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* 항목 간 간격 */
-}
-.best-panel li {
-  background: #fdfdfd; /* 약간의 음영 */
-  border: 1px solid #f0f0f0; /* 매우 연한 테두리 */
-  border-radius: 10px;
-  padding: 12px 15px; /* 내부 패딩 */
-  font-size: 0.95rem; /* 기본 폰트 크기 */
-  display: flex;
-  align-items: center;
-  gap: 12px; /* 아이콘, 이름, 금액 간 간격 */
-}
-.best-panel li .rank-icon { /* JS에서 🥇🥈🥉 아이콘과 함께 이 클래스 사용 */
-  font-size: 1.2em; 
-  font-weight: 600; /* 목표 이미지의 아이콘이 굵어보임 */
-  color: var(--accent-color); /* 또는 순위별 다른 색상 */
-  width: 25px; /* 아이콘 공간 */
-  text-align: center;
-}
-.best-panel li .category-name {
-  flex-grow: 1; /* 카테고리 이름이 남은 공간 차지 */
-  color: var(--text-main);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.best-panel li .amount {
-  margin-left: auto; /* 오른쪽 정렬 */
-  font-weight: 600;
-  color: var(--text-main);
-  white-space: nowrap;
-}
-/* 목표 이미지에 금액이 2개씩 있는 부분은 JS에서 추가 span과 클래스 필요 */
-/* .best-panel li .sub-amount { font-size: 0.85em; color: var(--text-light); } */
-
-
-/* 최근 거래 & 공통 리스트 스타일 */
-.recent-entries ul, #inputRecordList, .data-list { /* #recordList -> #inputRecordList로 변경 또는 통합 */
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.recent-entries li, #inputRecordList li, .data-list li {
-  background: #fdfdfd;
-  border: 1px solid #f0f0f0;
-  border-radius: 10px; /* 목표 이미지와 유사하게 */
-  padding: 10px 12px; /* 패딩 조정 */
-  margin-bottom: 8px;
-  font-size: 0.9rem; /* 기본 폰트 크기 */
-  display: flex;
-  align-items: center;
-  gap: 10px; /* 내부 요소 간격 */
-  flex-wrap: nowrap; /* 한 줄로 유지, 넘치면 아래 span에서 ellipsis 처리 */
-  overflow: hidden; /* li 자체에서 넘치는 것 방지 */
-}
-/* JS에서 각 span에 클래스 부여 권장 */
-.recent-entries li .date, #inputRecordList li .date, .data-list li .date { 
-    font-size: 0.85rem; color: var(--text-light); min-width: 70px; flex-shrink: 0; 
-}
-.recent-entries li .type, #inputRecordList li .type, .data-list li .type { 
-    font-weight: 500; min-width: 35px; text-align: center; 
-    padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; flex-shrink: 0;
-}
-.recent-entries li .type.income, #inputRecordList li .type.income, .data-list li .type.income { background-color: #e6f7eb; color: var(--income-color); }
-.recent-entries li .type.expense, #inputRecordList li .type.expense, .data-list li .type.expense { background-color: #feebee; color: var(--expense-color); }
-
-.recent-entries li .category, #inputRecordList li .category, .data-list li .category { 
-    flex-grow: 1; /* 남은 공간 차지 */
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-    color: var(--text-main); padding-right: 5px;
-}
-.recent-entries li .amount, #inputRecordList li .amount, .data-list li .amount { 
-    font-weight: 600; color: var(--text-main); min-width: 70px; 
-    text-align: right; margin-left:auto; /* 오른쪽으로 밀기 */
-    white-space: nowrap; flex-shrink: 0;
-}
-.recent-entries li .memo, #inputRecordList li .memo, .data-list li .memo { 
-    font-size: 0.85rem; color: #999; max-width: 80px; 
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-    flex-shrink: 0; padding-left: 5px;
-}
-
-/* 거래입력폼 */
-.entry-form { /* 카드 스타일 상속 */
-  display: flex;
-  flex-direction: column;
-  gap: 12px; /* 폼 요소 간 간격 */
-}
-.entry-form input[type="text"],
-.entry-form input[type="number"],
-.entry-form input[type="date"],
-.entry-form select,
-.entry-form textarea /* textarea 추가 */ {
-  display: block;
-  width: 100%;
-  padding: 10px 12px; /* 패딩 조정 */
-  font-size: 0.95rem; /* 폰트 크기 */
-  border: 1px solid var(--border-color);
-  border-radius: 8px; /* 둥글기 조정 */
-  background: #fff;
-  outline: none;
-  transition: border 0.17s, box-shadow 0.17s;
-  box-sizing: border-box;
-  /* margin-bottom 제거, gap으로 처리 */
-}
-.entry-form input:focus, .entry-form select:focus, .entry-form textarea:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); /* 포커스 시 그림자 효과 */
-}
-.entry-form textarea {
-    min-height: 70px; resize: vertical;
-}
-.entry-form button[type="submit"] {
-  background-color: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 12px 0; /* 상하 패딩 */
-  font-size: 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  width: 100%;
-  font-weight: 500; /* 두께 조정 */
-  margin-top: 5px; /* 위쪽 간격 */
-}
-.entry-form button[type="submit"]:hover {
-  background-color: #2563eb;
-}
-
-/* 특정 탭의 요약 패널 (세로 정렬) */
-.summary-panel.column { /* 카드 스타일 상속 */
-  flex-direction: column !important; /* 강제 세로 정렬 */
-  align-items: stretch; /* 내부 아이템들 폭 늘림 */
-  gap: 10px; /* 내부 아이템 간격 */
-  text-align: left;
-  padding: 15px 20px; /* 내부 패딩 조정 */
-}
-.summary-panel.column > div {
-  text-align: left !important;
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-  font-size: 0.95rem; /* 폰트 크기 */
-  font-weight: 500;
-  margin: 0;
-  padding: 5px 0; /* 위아래 약간의 패딩 */
-  color: var(--text-light);
-  border-bottom: 1px dashed var(--border-color); /* 구분선 */
-}
-.summary-panel.column > div:last-child { border-bottom: none; }
-.summary-panel.column .num {
-  font-size: 1rem; /* 폰트 크기 */
-  font-weight: 600;
-  margin-left: 8px;
-  color: var(--text-main); /* 숫자 색상 */
-}
-
-
-/* 종합소득세 제출서류 폼 */
-#taxReportForm { /* 카드 스타일이 적용될 수 있도록 class="entry-form" 추가 고려 또는 별도 스타일 */
-    /* padding, background 등은 카드 스타일에서 가져옴 */
-}
-#taxReportForm label {
-  display: block;
-  font-size: 0.9rem; /* 라벨 크기 */
-  font-weight: 500;
-  margin: 10px 0 5px 0; /* 간격 조정 */
-  color: var(--text-main);
-}
-/* #taxReportForm input, select 스타일은 .entry-form의 것을 공유하거나 약간 다르게 할 수 있음 */
-
-
-/* 로그인 박스 관련 스타일 (기존 CSS 유지 및 일부 수정) */
-.auth-area { /* HTML에서 loginBox와 profileMenu를 감싸는 div */
-  position: absolute; /* .mobile-frame 기준 */
-  top: 18px; right: 20px; /* 위치 조정 */
-  z-index: 50; /* 다른 요소들 위 */
-  display: flex;
-  align-items: center;
-}
-.login-box { display: flex; /* JS에서 none/flex 토글 */ }
-.login-btn { /* 기존 스타일 유지 또는 약간 수정 */
-  background: #fff; border: 1px solid var(--border-color); color: var(--text-main);
-  border-radius: 8px; font-size: 0.9rem; font-weight: 500;
-  padding: 8px 15px; cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: background 0.15s, border-color 0.15s;
-}
-.login-btn:hover { background: #f0f2f5; border-color: #d1d5db; }
-
-.profile-menu { display: none; /* JS에서 flex 토글 */ align-items: center; }
-.user-avatar { /* 로그인 후 프로필 아바타 */
+.profile-menu { display: none; align-items: center; }
+.user-avatar {
   width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
-  border: 2px solid #fff; /* 프레임 배경과 구분되도록 */
-  box-shadow: var(--shadow-sm);
-  object-fit: cover; /* 이미지 비율 유지 */
-  background-color: #e5e7eb; /* 이미지 없을 시 배경 */
+  border: 2px solid var(--accent-color); box-shadow: var(--shadow-sm);
+  object-fit: cover; background-color: #eee;
 }
 .profile-dropdown {
-  display: none; position: absolute; right:0; top: calc(100% + 8px); /* 아바타 바로 아래 */
-  background: #fff; border-radius: 12px; /* 둥글기 */
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* 그림자 */
-  min-width: 220px; padding: 10px; /* 내부 패딩 약간 줄임 */
-  z-index: 120;
-  border: 1px solid var(--border-color);
+  display: none; position: absolute; right:0; top: calc(100% + 10px);
+  background: var(--content-bg); border-radius: var(--card-radius); box-shadow: var(--shadow-md);
+  min-width: 240px; padding: 10px; z-index:1030; border: 1px solid var(--border-color);
 }
 .profile-dropdown.show { display:block; }
-.profile-info { display:flex; gap:10px; align-items:center; margin-bottom:10px; padding: 8px; border-bottom: 1px solid var(--border-color); }
-.user-avatar-big { width:42px; height:42px; border-radius:50%; object-fit:cover; border: 1px solid var(--border-color); }
-#profileEmail { font-weight:600; font-size: 0.9rem; color: var(--text-main); }
-#profileName { font-size:0.8rem; color:var(--text-light); }
+.profile-info { display:flex; gap:12px; align-items:center; margin-bottom:8px; padding: 10px; border-bottom: 1px solid var(--border-color); }
+.user-avatar-big { width:50px; height:50px; border-radius:50%; object-fit:cover; border: 1px solid var(--border-color); }
+.profile-dropdown-text { color: var(--text-main); }
+.profile-dropdown-text.small { font-size:0.85em; color:var(--text-light); }
 .profile-dropdown .logout-btn { /* 드롭다운 내 로그아웃 버튼 */
-  margin-top:5px; width:100%; background:#f7f7f7; color: var(--text-main); border:1px solid var(--border-color); 
-  padding:10px 0; border-radius:8px; cursor:pointer; font-weight:500; font-size: 0.9rem;
-  transition:background 0.15s;
+  width:100%; background:transparent; color: var(--expense-color); border:none; 
+  padding:10px; border-radius:var(--card-radius); cursor:pointer; font-weight:500; font-size: 0.9rem;
+  text-align: left; transition:background var(--transition);
 }
-.profile-dropdown .logout-btn:hover { background:#e9e9e9; }
+.profile-dropdown .logout-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
 
 .login-popup {
-  display: none; position: fixed; /* 화면 중앙 고정 */
-  top: 50%; left: 50%; transform: translate(-50%, -50%);
-  z-index: 1050; /* 최상단 */
-  background: #fff;
-  border-radius: var(--card-radius); /* 둥글기 */
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15); /* 그림자 */
-  padding: 25px 30px; /* 패딩 */
-  width: 90%; max-width: 380px; /* 너비 */
-  flex-direction: column;
-  gap: 15px; /* 버튼 간 간격 */
+  display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 1050; background: var(--content-bg); border-radius: var(--card-radius);
+  box-shadow: var(--shadow-lg); padding: 30px; width: 90%; max-width: 400px;
+  flex-direction: column; gap: 15px; text-align: center;
 }
 .login-popup.show { display: flex; }
+.popup-title { font-size: 1.3rem; font-weight: 600; margin: 0 0 15px 0; color: var(--text-main); }
 .social-btn {
-  background: #f9f9f9; border: 1px solid var(--border-color); border-radius: 8px;
+  border: 1px solid var(--border-color); border-radius: 8px;
   font-size: 0.95rem; font-weight: 500; color: var(--text-main);
-  padding: 12px 15px; /* 패딩 */
-  display: flex; align-items: center; gap: 10px; /* 아이콘과 텍스트 간격 */
-  cursor: pointer;
-  transition: background 0.16s, border-color 0.16s;
+  padding: 0; height: var(--button-height); display: flex; align-items: center; justify-content: center; gap: 10px;
+  cursor: pointer; transition: background var(--transition), border-color var(--transition); text-decoration: none;
 }
-.social-btn img { width: 20px; height: 20px; border-radius: 3px; }
-.social-btn:hover { background: #eef2ff; border-color: var(--accent-color); color: var(--accent-color); }
+.social-btn img { width: 20px; height: 20px; }
+.social-btn.google { background: #fff; }
+.social-btn.google:hover { background: #f8f8f8; border-color: #ccc; }
+.social-btn.kakao { background: #FEE500; color: #191919; border-color: #FEE500;}
+.social-btn.kakao:hover { background: #f0d900; border-color: #f0d900; }
+.social-btn.naver { background: #03C75A; color: #fff; border-color: #03C75A;}
+.social-btn.naver:hover { background: #02b050; border-color: #02b050; }
+.close-popup-btn {
+    background: transparent; border: none; color: var(--text-light); font-size: 0.9rem;
+    padding: 10px; cursor: pointer; margin-top: 10px;
+}
+.close-popup-btn:hover { color: var(--text-main); text-decoration: underline; }
+
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width);
+  background: var(--content-bg); box-shadow: 5px 0 15px rgba(0,0,0,0.05);
+  transform: translateX(-100%); transition: transform var(--transition);
+  z-index: 1010; display: flex; flex-direction: column;
+  padding: 0; border-right: 1px solid var(--border-color);
+}
+.sidebar.show { transform: translateX(0); }
+
+.sidebar-header {
+  display: flex; align-items: center; padding: 0 20px; height: var(--header-height);
+  border-bottom: 1px solid var(--border-color);
+}
+.sidebar-logo { width: 30px; height: 30px; margin-right: 10px; border-radius: 6px; }
+.sidebar-header span { font-size: 1.1rem; font-weight: 700; color: var(--accent-color); }
+
+.sidebar ul { list-style: none; margin: 0; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+.sidebar a {
+  text-decoration: none; color: var(--text-light); font-weight: 500;
+  padding: 10px 15px; border-radius: 8px; font-size: 0.9rem; display: block;
+  transition: background var(--transition), color var(--transition), padding-left var(--transition), letter-spacing var(--transition);
+}
+.sidebar a.active, .sidebar a:hover {
+  background: var(--accent-color); color: var(--text-on-accent);
+  font-weight: 500; padding-left: 20px; letter-spacing: 0.5px;
+}
+.sidebar-footer { padding: 20px; text-align: center; font-size: 0.75rem; color: var(--text-light); border-top: 1px solid var(--border-color);}
+.mobile-login-menu { display: none; }
 
 
-/* 모바일 반응형 */
-@media (max-width: 600px) {
-  :root {
-    --frame-radius: 0px; /* 모바일에선 둥글기 없음 */
-    --sidebar-width: 280px; /* 모바일 사이드바 너비 고정 */
+.overlay { /* 이전과 동일 */ }
+
+.main-content-wrapper { width: 100%; }
+.main-content {
+  padding: 20px; /* 기본 패딩 */
+  padding-top: calc(var(--header-height) + 20px); /* 고정 헤더 고려 */
+  width: 100%; flex-grow: 1;
+  transition: padding-left var(--transition);
+}
+@media (min-width: 600px) { /* 데스크탑에서 사이드바 열렸을 때 */
+  .sidebar.show ~ .main-content-wrapper .main-content { /* 일반 형제 선택자 사용 */
+    padding-left: calc(var(--sidebar-width) + 20px);
   }
-  body { align-items: flex-start; /* 모바일에서는 프레임이 전체를 차지하므로 상단정렬 */ }
-  .mobile-frame {
-    width: 100vw !important;
-    min-width: 100vw;
-    border-radius: 0; /* 모바일에선 둥글기 없음 */
-    padding: 0; /* 프레임 자체 패딩 제거, main-content에서 처리 */
-    margin-top: 0; margin-bottom: 0;
-    min-height: 100dvh; /* 모바일 주소창 등 고려 */
-  }
-  .main-content { /* 모바일 주 컨텐츠 패딩 */
-    padding: 60px 15px 20px 15px; /* 상단 여백, 좌우, 하단 */
-  }
-  .sidebar.show + .main-content, .main-content.shifted {
-     padding-left: 15px; /* 모바일에서는 사이드바가 오버레이 되므로 밀지 않음 */
-  }
+}
+
+
+/* === 탭 및 공통 컨텐츠 === */
+.tab { display: none; animation: fadeIn 0.4s ease-out; }
+.tab.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.tab-header {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+.tab-header h1 {
+  font-size: 1.8rem; margin: 0; color: var(--text-main);
+  font-weight: 700; letter-spacing: -0.5px;
+}
+/* 기간 필터는 tab-header 안에 배치 */
+.tab-header .period-filter {
+    background: none; box-shadow: none; border: none; padding: 0; margin-top: 15px; margin-bottom: 0;
+}
+
+
+.card { /* 공통 카드 스타일 */
+  background: var(--content-bg); border: 1px solid var(--border-color);
+  border-radius: var(--card-radius); padding: 20px;
+  margin-bottom: 25px; box-shadow: var(--shadow-sm);
+}
+.card h3 { /* 카드 내 섹션 제목 */
+  font-size: 1.1rem; color: var(--text-main); margin: 0 0 15px 0; font-weight: 600;
+  padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;
+}
+
+/* === 대시보드 상세 === */
+.dashboard-grid { /* 대시보드 레이아웃을 위한 그리드 */
+    display: grid;
+    gap: 20px;
+    /* grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* 반응형 컬럼 */
+}
+/* .summary-panel, .chart-container 등은 .card 클래스를 이미 가짐 */
+
+.summary-panel.card { display: flex; justify-content: space-around; gap: 15px; flex-wrap: wrap; }
+.summary-item {
+  flex: 1; min-width: 130px; text-align: center; padding: 15px 10px;
+  border-radius: 10px; background: #f9fafb; border: 1px solid #f0f2f5;
+}
+.summary-label { display: block; font-size: 0.8rem; color: var(--text-light); margin-bottom: 8px; font-weight: 500; }
+.summary-value { display: block; font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
+.summary-value.income { color: var(--income-color); }
+.summary-value.expense { color: var(--expense-color); }
+.summary-value.profit { color: var(--profit-color); }
+
+
+.chart-container.card { padding: 20px; }
+canvas#trendChart { width: 100% !important; height: 250px !important; display: block; }
+
+.compare-panel.card { font-size: 0.9rem; }
+.compare-panel > div { margin-bottom: 5px; }
+.compare-panel strong { font-weight: 600; }
+.compare-panel .comparison-details { display: flex; align-items: center; gap: 5px; font-size: 1rem; }
+.compare-panel .arrow.up { color: var(--income-color); }
+.compare-panel .arrow.down { color: var(--expense-color); }
+.compare-panel .positive { color: var(--income-color); }
+.compare-panel .negative { color: var(--expense-color); }
+
+
+.best-panel.card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.best-panel.card li {
+  background: transparent; border: none; border-bottom: 1px dashed var(--border-color);
+  padding: 10px 0; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
+}
+.best-panel.card li:last-child { border-bottom: none; }
+.best-panel.card li .rank-icon { font-size: 1em; color: var(--text-light); width: 20px; text-align: center;}
+.best-panel.card li .category-name { flex-grow: 1; color: var(--text-main); }
+.best-panel.card li .amount { font-weight: 600; color: var(--text-main); margin-left: auto; }
+
+
+.recent-entries.card ul { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; }
+.recent-entries.card li {
+  border-bottom: 1px solid #f0f2f5; padding: 10px 5px;
+  font-size: 0.85rem; display: flex; align-items: center; gap: 8px;
+  background: transparent; border-radius: 0; box-shadow: none; border-left: 3px solid transparent;
+}
+.recent-entries.card li:last-child { border-bottom: none; }
+.recent-entries.card li:hover { background-color: #fcfdff; border-left-color: var(--accent-color); }
+/* .recent-entries li 내부 .date, .type, .category, .amount 스타일은 이전 CSS의 공통 리스트 스타일 활용 */
+.view-all-link {
+    display: block; text-align: right; margin-top: 15px; font-size: 0.9rem;
+    color: var(--accent-color); text-decoration: none; font-weight: 500;
+}
+.view-all-link:hover { text-decoration: underline; }
+.empty-list-message { color: var(--text-light); text-align: center; padding: 20px; font-style: italic; }
+
+
+/* === 폼 스타일 (거래입력, 세금계산서 입력 등) === */
+.entry-form.card { padding: 25px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px 20px; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full-width { grid-column: 1 / -1; }
+.form-group label {
+  font-size: 0.85rem; font-weight: 500; color: var(--text-light); margin-bottom: 6px;
+}
+.entry-form input[type="text"], .entry-form input[type="number"],
+.entry-form input[type="date"], .entry-form select, .entry-form textarea {
+  display: block; width: 100%; height: var(--input-height); padding: 0 12px;
+  font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--content-bg); outline: none; transition: border-color var(--transition), box-shadow var(--transition);
+}
+.entry-form textarea { height: auto; min-height: 80px; padding: 10px 12px; }
+.entry-form input:focus, .entry-form select:focus, .entry-form textarea:focus {
+  border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+.submit-btn, .filter-btn { /* 공통 버튼 스타일 */
+  background-color: var(--accent-color); color: var(--text-on-accent); border: none;
+  height: var(--button-height); padding: 0 25px; font-size: 0.95rem; border-radius: 8px;
+  cursor: pointer; transition: background-color var(--transition); font-weight: 500;
+}
+.submit-btn:hover, .filter-btn:hover { background-color: var(--accent-color-dark); }
+.submit-btn.full-width { width: 100%; }
+
+.filter-form.card { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter-form input[type="date"] { width: auto; flex-grow: 1; height: 38px; font-size: 0.9rem; }
+.filter-form .filter-btn { height: 38px; padding: 0 20px; font-size: 0.9rem; }
+
+.input-list-section.card h3 { margin-top: 0; }
+
+
+/* === 상세 내역 테이블/리스트 스타일 === */
+.data-list { list-style: none; padding: 0; margin: 0; }
+.data-list li { /* .recent-entries li 스타일과 유사하게 통일 */
+  border-bottom: 1px solid #f0f2f5; padding: 12px 8px; font-size: 0.85rem;
+  display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; overflow: hidden;
+}
+.data-list li:hover { background-color: #fcfdff; }
+/* .data-list li 내부 span들 (.date, .type, .category, .amount 등)은 .recent-entries li 내부 스타일 공유 */
+.data-list li .counterparty, .data-list li .proof { /* 거래처, 증빙 필드 스타일 추가 */
+    flex-basis: 120px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--text-light);
+}
+
+.export-btn { /* 공통 버튼 스타일(.submit-btn) 활용 또는 별도 */
+  display: inline-block; width: auto; margin: 0 0 15px 0;
+  background-color: var(--income-color); /* 초록색 계열 */
+}
+.export-btn:hover { background-color: #1e7e34; }
+
+
+/* QnA 리스트 스타일 */
+.qna-item { border-bottom: 1px solid var(--border-color); padding: 15px 0; }
+.qna-item:last-child { border-bottom: none; }
+.qna-title { font-size: 1rem; font-weight: 600; margin-bottom: 5px; }
+.qna-title .date { font-size: 0.8rem; color: var(--text-light); margin-left: 8px; }
+.qna-content { font-size: 0.9rem; line-height: 1.6; margin-bottom: 8px; color: var(--text-main); }
+.qna-user { font-size: 0.8rem; color: var(--text-light); text-align: right; }
+
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .form-grid { grid-template-columns: 1fr; } /* 모바일에선 폼 필드 한 줄로 */
+  .dashboard-grid { grid-template-columns: 1fr; } /* 대시보드 카드들도 한 줄로 */
+  .main-content { padding-left: 15px; padding-right: 15px; }
+  .sidebar.show ~ .main-content-wrapper .main-content { padding-left: 15px; } /* 모바일에서는 밀지 않음 */
+}
+
+@media (max-width: 600px) { /* 기존 600px 미디어쿼리 내용과 통합/조정 */
+  :root { --frame-radius: 0; --sidebar-width: 85vw; }
+  body { align-items: flex-start; }
+  .mobile-frame { width: 100vw; min-width: 100vw; border-radius: 0; margin: 0; min-height: 100dvh; }
+  .main-content { padding-top: calc(var(--header-height) + 15px); }
   
-  .hamburger { position: fixed; /* 모바일에서는 화면 고정 */ }
-  .auth-area { position: fixed; /* 모바일에서는 화면 고정 */ }
+  .hamburger { left: 10px; top: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
+  .auth-area { top: 10px; right: 10px; }
+  .user-avatar { width: 36px; height: 36px; }
 
-  /* 모바일에서 카드 패딩 줄이기 */
-  .period-filter, .summary-panel, .chart-container, .compare-panel, .best-panel, .recent-entries, .entry-form, .input-list-section, #transSummary, #taxSummary, #reportGuide {
-    padding: 15px;
-    margin-bottom: 15px;
-  }
-  h1 { font-size: 1.4rem; margin-bottom: 15px;}
-  h3 { font-size: 1rem; margin-bottom: 10px; }
+  .tab-header h1 { font-size: 1.5rem; }
+  .card { padding: 15px; margin-bottom: 15px; }
+  .card h3 { font-size: 1rem; margin-bottom: 10px; }
+  
+  .summary-item { min-width: calc(50% - 10px); } /* 요약 카드 한 줄에 2개씩 */
+  .summary-label { font-size: 0.75rem; }
+  .summary-value { font-size: 1.3rem; }
+  canvas#trendChart { height: 200px !important; }
 
-  .period-filter input[type="date"] { font-size: 0.9rem; padding: 8px 10px; }
-  .period-filter .quick-btn-row button { font-size: 0.85rem; padding: 7px 10px; }
-  .summary-panel { gap: 10px; }
-  .summary-panel > div { padding: 12px 8px; min-width: 100px; }
-  .summary-panel .num { font-size: 1.2rem; }
-  canvas#trendChart { height: 180px !important; }
+  .login-popup { width: calc(100% - 30px); padding: 20px; }
+  .popup-title { font-size: 1.2rem; }
+  .social-btn { height: calc(var(--button-height) - 4px); font-size: 0.9rem; }
 
-  /* 모바일에서는 우상단 로그인 버튼 대신 사이드바 메뉴의 로그인/로그아웃 사용 */
-  /* .login-box { display: none !important; } /* 이 규칙은 auth-area로 통합되면서 선택적 */
-  .mobile-login-menu { display: block !important; } /* 사이드바 내 모바일 로그인 메뉴 표시 */
+  .mobile-login-menu { display: block !important; }
 }
-
-/* 기존 CSS에 있었으나, auth-area로 통합되면서 선택적으로 조정될 수 있는 부분 */
-/* .profile-box 관련 스타일은 .profile-menu 와 그 하위 요소로 통합/조정됨 */
