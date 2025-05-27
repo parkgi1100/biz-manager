@@ -1,8 +1,8 @@
-// BizDash - script.js (최종 수정 제안)
+// BizDash - script.js (네이버 콜백 URL 및 날짜 ID 수정)
 
 // ======================= Firebase 설정 =======================
 const firebaseConfig = {
-  apiKey: "AIzaSyDIW89Y0Z5JPG4dBjoIDAofgy4XlAmQ7Jw",
+  apiKey: "AIzaSyDIW89Y0Z5JPG4dBjoIDAofgy4XlAmQ7Jw", // 실제 키 (보안 유의)
   authDomain: "bizdash-7c6fd.firebaseapp.com",
   projectId: "bizdash-7c6fd",
   storageBucket: "bizdash-7c6fd.firebasestorage.app",
@@ -19,10 +19,26 @@ let taxEntriesData = JSON.parse(localStorage.getItem('bizdash_taxEntries') || "[
 let qnaEntries = JSON.parse(localStorage.getItem('bizdash_qnaEntries') || "[]");
 let fixedAssets = JSON.parse(localStorage.getItem('bizdash_fixedAssets') || "[]");
 let currentChartInstance = null;
+let naverLoginInstance; // 네이버 로그인 인스턴스
 
 // ======================= 유틸리티 함수 =======================
-function formatDate(dateInput, format = 'yyyy-mm-dd') { /* 이전과 동일 */ }
-function formatCurrency(amount) { /* 이전과 동일 */ }
+function formatDate(dateInput, format = 'yyyy-mm-dd') {
+    if (!dateInput) return '';
+    const date = new Date(dateInput);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    if (format === 'yyyy-mm-dd') return `${year}-${month}-${day}`;
+    if (format === 'mm.dd') return `${month}.${day}`;
+    if (format === 'full') return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+    return date.toLocaleDateString('ko-KR');
+}
+
+function formatCurrency(amount) {
+    if (isNaN(amount) || amount === null) return '₩0';
+    return `₩${Number(amount).toLocaleString()}`;
+}
 
 function getPeriodDates(periodType) {
     const today = new Date();
@@ -42,7 +58,40 @@ function getPeriodDates(periodType) {
 }
 
 // ======================= UI 업데이트 및 렌더링 함수 =======================
-function updateLoginUI(user) { /* ... 이전과 동일 ... */ }
+function updateLoginUI(user) {
+  const loginBox = document.getElementById('loginBox');
+  const profileMenu = document.getElementById('profileMenu');
+  const userAvatar = document.getElementById('userAvatar');
+  const userAvatarBig = document.getElementById('userAvatarBig');
+  const profileEmailDiv = document.getElementById('profileEmail');
+  const profileNameDiv = document.getElementById('profileName');
+  const mobileLoginLink = document.getElementById('mobileLoginLink');
+
+  if (user) {
+    if (loginBox) loginBox.style.display = 'none';
+    if (profileMenu) profileMenu.style.display = 'flex';
+
+    const photoURL = user.photoURL || 'img/default-avatar.png';
+    if (userAvatar) { userAvatar.src = photoURL; userAvatar.style.display = 'block';}
+    if (userAvatarBig) userAvatarBig.src = photoURL;
+    if (profileEmailDiv) profileEmailDiv.textContent = user.email || '';
+    if (profileNameDiv) profileNameDiv.textContent = user.displayName || '사용자';
+    if (mobileLoginLink) {
+        mobileLoginLink.textContent = '로그아웃';
+        mobileLoginLink.onclick = () => auth.signOut().catch(err => console.error("로그아웃 오류:", err));
+    }
+  } else {
+    if (loginBox) loginBox.style.display = 'flex';
+    if (profileMenu) profileMenu.style.display = 'none';
+    if (userAvatar) userAvatar.src = 'img/default-avatar.png';
+    if (mobileLoginLink) {
+        mobileLoginLink.textContent = '로그인';
+        mobileLoginLink.onclick = openLoginPopup;
+    }
+    const drop = document.getElementById('profileDropdown');
+    if (drop) drop.classList.remove('show');
+  }
+}
 
 function renderDashboard() {
     console.log("Rendering Dashboard (at-a-glance focus)...");
@@ -64,13 +113,12 @@ function renderDashboard() {
         if (filteredEntries.length === 0) {
             recentListUl.innerHTML = '<li class="empty-list-message">거래 내역이 없습니다.</li>';
         } else {
-            // 대시보드에서는 더 간결하게, 최근 3-4개만 표시
             filteredEntries.slice(-4).reverse().forEach(e => {
                 recentListUl.innerHTML += `
                     <li class="dashboard-recent-item">
                         <span class="item-date">${formatDate(e.date, 'mm.dd')}</span>
                         <span class="item-category" title="${e.category || ''}">${e.category || '미분류'}</span>
-                        <span class="item-amount ${e.type.toLowerCase()}">${e.type === 'income' ? '+' : '-'}${formatCurrency(e.amount).replace('₩','')}</span>
+                        <span class="item-amount ${String(e.type).toLowerCase()}">${e.type === 'income' ? '+' : '-'}${formatCurrency(e.amount).replace('₩','')}</span>
                     </li>`;
             });
         }
@@ -79,42 +127,37 @@ function renderDashboard() {
     const chartCanvas = document.getElementById('trendChart');
     if (chartCanvas) {
         if (currentChartInstance) currentChartInstance.destroy();
-        // TODO: 차트 데이터는 주별/월별 집계 등으로 가공하여 더 의미있게 표시
         const chartLabels = filteredEntries.length > 0 ? filteredEntries.map(e => formatDate(e.date, 'mm.dd')).slice(-15) : ['데이터 없음'];
-        const profitData = []; // 예시: 일별 또는 기간별 순이익 데이터 계산
-        // ... (데이터 가공 로직) ...
+        const profitData = []; // TODO: 실제 순이익 데이터 계산 로직
         currentChartInstance = new Chart(chartCanvas.getContext('2d'), {
-            type: 'line', // 또는 bar
-            data: {
-                labels: chartLabels, // 가공된 라벨
-                datasets: [
-                    { label: '순이익 추이', data: profitData.length > 0 ? profitData : [0], borderColor: 'var(--profit-color)', backgroundColor: 'rgba(0,122,255,0.1)', tension: 0.2, fill: true }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } }, legend: { display: false }, tooltips: { mode: 'index', intersect: false } }
+            type: 'line',
+            data: { labels: chartLabels, datasets: [{ label: '순이익 추이', data: profitData.length > 0 ? profitData : [0], borderColor: 'var(--profit-color)', backgroundColor: 'rgba(0,122,255,0.1)', tension: 0.2, fill: true }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } }, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } } }
         });
     }
 
-    // TODO: 전년 동기 대비 로직 (데이터 필요)
-    document.getElementById('prevPeriodIncome').textContent = formatCurrency(0);
-    // ... (나머지 비교 패널 업데이트)
+    document.getElementById('prevPeriodIncome').textContent = formatCurrency(0); // TODO
+    document.getElementById('compareChangePercentage').textContent = '0%'; // TODO
+    document.getElementById('compareChangeAmount').textContent = formatCurrency(0); // TODO
+    document.getElementById('compareArrow').textContent = ''; // TODO
 
     const bestExpenseItemsListUl = document.getElementById('bestExpenseItemsList');
     if (bestExpenseItemsListUl) {
         bestExpenseItemsListUl.innerHTML = '';
         const expenseCategories = {};
-        filteredEntries.filter(e => e.type === 'expense').forEach(e => {
+        filteredEntries.filter(e => String(e.type).toLowerCase() === 'expense').forEach(e => {
             const category = e.category || '기타 비용';
             expenseCategories[category] = (expenseCategories[category] || 0) + e.amount;
         });
-        const sortedExpenses = Object.entries(expenseCategories).sort(([,a],[,b]) => b-a).slice(0,3); // Top 3
-        
+        const sortedExpenses = Object.entries(expenseCategories).sort(([,a],[,b]) => b-a).slice(0,3);
         if (sortedExpenses.length === 0) {
              bestExpenseItemsListUl.innerHTML = '<li class="empty-list-message">주요 지출 항목이 없습니다.</li>';
         } else {
-            sortedExpenses.forEach(([category, amount]) => {
+            sortedExpenses.forEach(([category, amount], index) => {
+                const rankIcons = ['🥇', '🥈', '🥉'];
                 bestExpenseItemsListUl.innerHTML += `
                     <li class="best-item">
+                        <span class="rank-icon">${rankIcons[index] || (index+1)+'위'}</span>
                         <span class="category-name" title="${category}">${category}</span>
                         <span class="amount">${formatCurrency(amount)}</span>
                     </li>`;
@@ -123,36 +166,165 @@ function renderDashboard() {
     }
 }
 
-function renderInputTabList() { /* ... 이전과 동일하게 최근 10건 표시 ... */ }
-function summarizeTransactions(transactionArray) { /* ... 이전과 동일 ... */ }
-function renderDetailTrans() { /* ... 이전과 동일, HTML 클래스명에 맞게 li 내부 span 클래스 조정 ... */ }
-function renderTaxList() { /* ... 이전과 동일 ... */ }
-function summarizeTaxEntries(taxArray) { /* ... 이전과 동일 ... */ }
-function renderTaxDetail() { /* ... 이전과 동일, HTML 클래스명에 맞게 li 내부 span 클래스 조정 ... */ }
+function renderInputTabList() {
+  const ul = document.getElementById('inputRecordList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  if (entries.length === 0) {
+    ul.innerHTML = '<li class="empty-list-message">최근 입력 내역이 없습니다.</li>';
+  } else {
+    entries.slice(-10).reverse().forEach(e => {
+      ul.innerHTML += `<li class="${String(e.type).toLowerCase()}">
+        <span class="date">${formatDate(e.date)}</span>
+        <span class="type ${String(e.type).toLowerCase()}">${e.type === 'income' ? '수입' : '지출'}</span>
+        <span class="category" title="${e.category || ''}">${e.category || '미분류'}</span>
+        <span class="amount">${formatCurrency(e.amount)}</span>
+        ${e.memo ? `<span class="memo" title="${e.memo}">(${e.memo})</span>` : ''}
+      </li>`;
+    });
+  }
+}
+
+function summarizeTransactions(transactionArray) {
+  let income = 0, expense = 0;
+  transactionArray.forEach(e => {
+    if (String(e.type).toLowerCase() === "income") income += Number(e.amount);
+    else if (String(e.type).toLowerCase() === "expense") expense += Number(e.amount);
+  });
+  return { income, expense, profit: income - expense, count: transactionArray.length };
+}
+
+function renderDetailTrans() {
+  const fromDate = document.getElementById('transFromDate')?.value;
+  const toDate = document.getElementById('transToDate')?.value;
+  const filtered = entries.filter(e => 
+    (!fromDate || e.date >= fromDate) && (!toDate || e.date <= toDate)
+  );
+  const summary = summarizeTransactions(filtered);
+  const transSummaryDiv = document.getElementById('transSummary');
+  if (transSummaryDiv) {
+    transSummaryDiv.innerHTML = `
+      <div>총수입: <span class="num income">${formatCurrency(summary.income)}</span></div>
+      <div>총지출: <span class="num expense">${formatCurrency(summary.expense)}</span></div>
+      <div>합계(순이익): <span class="num profit">${formatCurrency(summary.profit)}</span></div>
+      <div>거래건수: <span class="num">${summary.count}건</span></div>
+    `;
+  }
+  const ul = document.getElementById('detailTransList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  if (filtered.length === 0) {
+    ul.innerHTML = '<li class="empty-list-message">해당 기간의 거래 내역이 없습니다.</li>';
+  } else {
+    filtered.slice().reverse().forEach(e => {
+      ul.innerHTML += `<li class="${String(e.type).toLowerCase()}">
+        <span class="date">${formatDate(e.date)}</span>
+        <span class="type ${String(e.type).toLowerCase()}">${e.type === 'income' ? '수입' : '지출'}</span>
+        <span class="category" title="${e.category || ''}">${e.category || '미분류'}</span>
+        <span class="counterparty" title="${e.counterparty || ''}">${e.counterparty || '-'}</span>
+        <span class="proof" title="${e.proofType || ''}">${e.proofType || '-'}</span>
+        <span class="amount">${formatCurrency(e.amount)}</span>
+        <span class="memo" title="${e.memo || ''}">${e.memo || ''}</span>
+      </li>`;
+    });
+  }
+}
+
+function renderTaxList() {
+  const ul = document.getElementById('taxList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  if (taxEntriesData.length === 0) {
+    ul.innerHTML = '<li class="empty-list-message">등록된 세금계산서가 없습니다.</li>';
+  } else {
+    taxEntriesData.slice(-10).reverse().forEach(e => {
+      ul.innerHTML += `<li>
+        <span>${formatDate(e.date)}</span>
+        <span>${e.company}</span>
+        <span>공급가액: ${formatCurrency(e.supplyAmount)}</span>
+        <span>세액: ${formatCurrency(e.taxAmount)}</span>
+        ${e.taxMemo ? `<span>(${e.taxMemo})</span>` : ''}
+      </li>`;
+    });
+  }
+}
+
+function summarizeTaxEntries(taxArray) {
+    let supply = 0, tax = 0;
+    taxArray.forEach(e => {
+        supply += Number(e.supplyAmount) || 0;
+        tax += Number(e.taxAmount) || 0;
+    });
+    return { supply, tax, count: taxArray.length };
+}
+
+function renderTaxDetail() {
+  const fromDate = document.getElementById('taxFromDate')?.value;
+  const toDate = document.getElementById('taxToDate')?.value;
+  const filtered = taxEntriesData.filter(e => 
+    (!fromDate || e.date >= fromDate) && (!toDate || e.date <= toDate)
+  );
+  
+  const summary = summarizeTaxEntries(filtered);
+  const taxSummaryDiv = document.getElementById('taxSummary');
+  if (taxSummaryDiv) {
+    taxSummaryDiv.innerHTML = `
+      <div>공급가액 합계: <span class="num">${formatCurrency(summary.supply)}</span></div>
+      <div>세액 합계: <span class="num">${formatCurrency(summary.tax)}</span></div>
+      <div>총 건수: <span class="num">${summary.count}건</span></div>
+    `;
+  }
+
+  const ul = document.getElementById('taxDetailList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  if (filtered.length === 0) {
+    ul.innerHTML = '<li class="empty-list-message">해당 기간의 세금계산서 내역이 없습니다.</li>';
+  } else {
+    filtered.slice().reverse().forEach(e => {
+      ul.innerHTML += `<li>
+        <span>${formatDate(e.date)}</span>
+        <span>${e.company || '-'}</span>
+        <span>공급가액: ${formatCurrency(e.supplyAmount)}</span>
+        <span>세액: ${formatCurrency(e.taxAmount)}</span>
+        <span>${e.taxMemo || ''}</span>
+      </li>`;
+    });
+  }
+}
 
 function renderAssetsTab() {
     console.log("Rendering Assets Tab...");
-    // TODO: 고정자산 목록(fixedAssets)을 #assetsList 같은 곳에 표시
-    // TODO: 고정자산 추가/수정 폼 로직
-    const assetsContent = document.querySelector("#assetsTab .card"); // 예시 선택자
+    const assetsContent = document.querySelector("#assetsTab .card");
     if (assetsContent) {
         if (fixedAssets.length === 0) {
             assetsContent.innerHTML = '<p>등록된 고정자산이 없습니다. 새로 추가해주세요.</p> ';
         } else {
-            // fixedAssets 배열을 사용하여 목록 테이블 또는 리스트 생성
             assetsContent.innerHTML = `<p>총 ${fixedAssets.length}개의 고정자산이 있습니다. (목록 UI 개발 필요)</p>`;
         }
     }
 }
 
-function renderQnaList() { /* ... 이전과 동일 ... */ }
-function renderSettings() {
-    console.log("Rendering Settings Tab...");
-    // 현재는 HTML에 정적으로 내용이 있지만, JS로 동적 업데이트가 필요하면 여기서 처리
-    // 예: 사용자 설정값 불러오기 등
+function renderQnaList() {
+  const ul = document.getElementById('qnaList');
+  if (!ul) return;
+  ul.innerHTML = '';
+  if (qnaEntries.length === 0) {
+    ul.innerHTML = '<li class="empty-list-message">문의 내역이 없습니다.</li>';
+  } else {
+    qnaEntries.slice().reverse().forEach(e => {
+      ul.innerHTML += `<li class="qna-item">
+        <div class="qna-title"><b>${e.title}</b> <span class="date">(${formatDate(e.date, 'full')})</span></div>
+        <div class="qna-content">${e.content.replace(/\n/g, "<br/>")}</div>
+        ${e.user ? `<div class="qna-user">작성자: ${e.user}</div>` : ''}
+      </li>`;
+    });
+  }
 }
 
-window.renderFunctionForTab = function(tabId) { /* ... 'assets': renderAssetsTab 추가 ... */
+function renderSettings() { console.log("Settings tab - TBD"); }
+
+window.renderFunctionForTab = function(tabId) {
     console.log(`Rendering tab specific content for: ${tabId}`);
     switch(tabId) {
         case 'dashboard': renderDashboard(); break;
@@ -160,7 +332,7 @@ window.renderFunctionForTab = function(tabId) { /* ... 'assets': renderAssetsTab
         case 'detailTrans': renderDetailTrans(); break;
         case 'tax': renderTaxList(); break;
         case 'taxDetail': renderTaxDetail(); break;
-        case 'assets': renderAssetsTab(); break; // 추가
+        case 'assets': renderAssetsTab(); break;
         case 'taxReport': break;
         case 'qna': renderQnaList(); break;
         case 'settings': renderSettings(); break;
@@ -169,14 +341,61 @@ window.renderFunctionForTab = function(tabId) { /* ... 'assets': renderAssetsTab
 };
 
 function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
-// function saveAllData() { ... } // 필요시 모든 데이터 저장 함수
 
-// 이벤트 핸들러들 (handleAddEntry는 HTML의 새 필드명 반영)
+function openLoginPopup() {
+  const popup = document.getElementById('loginPopup');
+  if (popup) popup.classList.add('show');
+  document.addEventListener('mousedown', closeLoginPopupOutside);
+}
+function closeLoginPopup() {
+  const popup = document.getElementById('loginPopup');
+  if (popup) popup.classList.remove('show');
+  document.removeEventListener('mousedown', closeLoginPopupOutside);
+}
+function closeLoginPopupOutside(event) {
+  const popup = document.getElementById('loginPopup');
+  const loginMainBtn = document.getElementById('loginMainBtn'); // 로그인 버튼 자체
+  const authArea = document.getElementById('authArea'); // 프로필 메뉴 포함 영역
+
+  if (popup && popup.classList.contains('show') && !popup.contains(event.target) && 
+      (!loginMainBtn || !loginMainBtn.contains(event.target)) && // 로그인 버튼 클릭이 아닐 때
+      (!authArea || !authArea.contains(event.target)) ) { // 프로필 메뉴 클릭이 아닐 때
+    closeLoginPopup();
+  }
+}
+
+function toggleProfileDropdown() {
+  const drop = document.getElementById('profileDropdown');
+  if (!drop) return;
+  const isShown = drop.classList.toggle('show');
+  if (isShown) {
+    document.addEventListener('mousedown', closeProfileDropdownOutside);
+  } else {
+    document.removeEventListener('mousedown', closeProfileDropdownOutside);
+  }
+}
+
+function closeProfileDropdownOutside(event) {
+  const profileMenuDiv = document.getElementById('profileMenu'); // .profile-menu div
+  if (profileMenuDiv && !profileMenuDiv.contains(event.target)) {
+    // 클릭된 곳이 프로필 메뉴 영역 외부라면 드롭다운을 닫음
+    const drop = document.getElementById('profileDropdown');
+    if (drop && drop.classList.contains('show')) {
+        drop.classList.remove('show');
+        document.removeEventListener('mousedown', closeProfileDropdownOutside);
+    }
+  }
+}
+
+
+const closeLoginPopupBtn = document.getElementById('closeLoginPopupBtn');
+if (closeLoginPopupBtn) closeLoginPopupBtn.onclick = closeLoginPopup;
+
 function handleAddEntry(event) {
   event.preventDefault();
   const entryData = {
     id: Date.now(),
-    date: document.getElementById('inputDate').value, // HTML id와 일치
+    date: document.getElementById('inputDateHtml').value, // ★★★ HTML ID 'inputDateHtml' 사용 ★★★
     type: document.getElementById('inputType').value,
     amount: Number(document.getElementById('inputAmount').value),
     category: document.getElementById('inputCategory').value.trim(),
@@ -184,7 +403,6 @@ function handleAddEntry(event) {
     proofType: document.getElementById('inputProofType').value,
     memo: document.getElementById('inputMemo').value.trim()
   };
-  // ... (유효성 검사 및 저장 로직 이전과 동일) ...
   if (!entryData.date || !entryData.amount) return alert("거래일자와 금액은 필수 항목입니다.");
   if (isNaN(entryData.amount)) return alert("금액은 숫자로 입력해야 합니다.");
 
@@ -193,12 +411,33 @@ function handleAddEntry(event) {
   renderInputTabList();
   if (document.getElementById('dashboardTab')?.classList.contains('active')) renderDashboard();
   event.target.reset();
-  document.getElementById('inputDate').value = formatDate(new Date(), 'yyyy-mm-dd');
+  // 새 거래 입력 후 날짜 필드를 오늘 날짜로 다시 설정
+  const inputDateElem = document.getElementById('inputDateHtml');
+  if(inputDateElem) inputDateElem.value = formatDate(new Date(), 'yyyy-mm-dd');
 }
-// ... (다른 핸들러 함수들 이전과 유사하게 유지 또는 필요시 수정) ...
+
 function handleFilterTransByPeriod(event) { event.preventDefault(); renderDetailTrans(); }
-function exportToCsv(filename, headers, dataRows) { /* ... 이전과 동일 ... */ }
-function handleExportDetailTrans() { /* ... 이전과 동일 ... */ }
+function exportToCsv(filename, headers, dataRows) {
+    if (dataRows.length === 0) { alert("내보낼 데이터가 없습니다."); return; }
+    const csvContent = [
+        headers.join(','),
+        ...dataRows.map(row => row.map(field => `"${String(field === null || field === undefined ? '' : field).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link); link.click();
+    document.body.removeChild(link); URL.revokeObjectURL(link.href);
+}
+function handleExportDetailTrans() {
+    const fromDate = document.getElementById('transFromDate')?.value;
+    const toDate = document.getElementById('transToDate')?.value;
+    const filtered = entries.filter(e => (!fromDate || e.date >= fromDate) && (!toDate || e.date <= toDate));
+    const headers = ["일자", "구분", "항목", "거래처", "증빙", "금액", "메모"];
+    const dataRows = filtered.map(e => [e.date, (e.type === "income" ? "수입" : "지출"), e.category, e.counterparty, e.proofType, e.amount, e.memo]);
+    exportToCsv(`거래상세내역_${fromDate || '전체'}_${toDate || '전체'}.csv`, headers, dataRows);
+}
 function handleAddTaxEntry(event) { /* ... 이전과 동일 ... */ }
 function handleFilterTaxByPeriod(event) { event.preventDefault(); renderTaxDetail(); }
 function handleExportTaxDetail() { /* ... 이전과 동일 ... */ }
@@ -206,54 +445,125 @@ const taxReportFormats = { /* ... 이전과 동일 ... */ };
 function handleDownloadTaxReport(event) { /* ... 이전과 동일 ... */ }
 function handleAddQna(event) { /* ... 이전과 동일 ... */ }
 function handleToggleBizTypeInput(selectElement) { /* ... 이전과 동일 ... */ }
-function handleQuickPeriodFilter(event) { /* ... 이전과 동일 ... */ }
+function handleQuickPeriodFilter(event) {
+    if (event.target.tagName === 'BUTTON') {
+        const period = event.target.dataset.period;
+        const dates = getPeriodDates(period);
+        document.getElementById('fromDate').value = dates.start;
+        document.getElementById('toDate').value = dates.end;
+        document.querySelectorAll('.quick-btn-row button').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        renderDashboard();
+    }
+}
 
+// ======================= Firebase Social Login Functions =======================
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider)
+    .then((result) => { console.log("Google 로그인 성공:", result.user); closeLoginPopup(); })
+    .catch((error) => { console.error("Google 로그인 오류:", error); alert(`Google 로그인 실패: ${error.message}`); });
+}
 
-// Firebase Social Login Functions (Google, Kakao, Naver - 이전 설명과 주의사항 동일)
-function signInWithGoogle() { /* ... 이전과 동일 ... */ }
-function signInWithKakao() { /* ... 이전과 동일 (API 키 및 백엔드 연동 TODO 명시) ... */ }
-let naverLoginInstance;
-function signInWithNaver() { /* ... 이전과 동일 (API 키, 콜백 URL 및 백엔드 연동 TODO 명시) ... */ }
-function initializeNaverLogin() { /* ... 이전과 동일 (API 키, 콜백 URL TODO 명시) ... */ }
+// Kakao 로그인 관련 함수는 제거됨
 
+function signInWithNaver() {
+    if (!naverLoginInstance) {
+        alert("네이버 로그인이 초기화되지 않았습니다. 잠시 후 다시 시도해주세요.\n또는 네이버 개발자센터에 등록된 정보(Client ID, Callback URL)를 확인해주세요.");
+        return;
+    }
+    if (naverLoginInstance && typeof naverLoginInstance.authorize === 'function') {
+        naverLoginInstance.authorize(); 
+    } else {
+        alert("네이버 로그인 기능을 실행할 수 없습니다. SDK 초기화 상태를 확인하세요.");
+    }
+}
 
-// DOMContentLoaded
+function initializeNaverLogin() {
+    try {
+        if (typeof naver !== "undefined" && typeof naver.LoginWithNaverId !== "undefined") {
+            naverLoginInstance = new naver.LoginWithNaverId({
+                clientId: "hyIyx5ajznMculp0VBZO", // 사용자 제공 Client ID 적용
+                callbackUrl: "https://parkgi1100.github.io/biz-manager/", // ★★★ 사용자 제공 콜백 URL 적용 ★★★
+                isPopup: false, 
+                // loginButton: {color: "green", type: 3, height: 40} // 직접 만든 버튼 사용하므로 제거
+            });
+            naverLoginInstance.init();
+            console.log("Naver Login SDK Initialized with Client ID:", "hyIyx5ajznMculp0VBZO", "and Callback URL:", "https://parkgi1100.github.io/biz-manager/");
+
+            naverLoginInstance.getLoginStatus(function (status) {
+                if (status) {
+                    console.log("Naver user is logged in.");
+                    const naverAccessToken = naverLoginInstance.getAccessToken();
+                    const naverUserEmail = naverLoginInstance.user.getEmail();
+                    const naverUserNickname = naverLoginInstance.user.getNickName();
+                    
+                    console.log("Naver Access Token:", naverAccessToken);
+                    console.log("Naver User Email:", naverUserEmail);
+                    console.log("Naver User Nickname:", naverUserNickname);
+                    // !!! 중요: 여기서부터 Firebase Custom Authentication 흐름 시작 (백엔드 필요) !!!
+                    alert("네이버 로그인 성공 (클라이언트 측)! Firebase 연동을 위해서는 백엔드에서 Custom Token 발급이 필요합니다.");
+                    // 실제 앱에서는 여기서 closeLoginPopup(); 호출 전에 Firebase 로그인까지 완료해야 함
+                } else {
+                    console.log("Naver user is not logged in (or getLoginStatus call failed).");
+                }
+            });
+        } else {
+          console.warn("Naver SDK not loaded, or 'naver' object is not available.");
+        }
+    } catch (e) {
+        console.error("Naver Login SDK 초기화 중 오류 발생:", e);
+    }
+}
+
+// ======================= DOMContentLoaded - 초기화 및 이벤트 리스너 =======================
 document.addEventListener('DOMContentLoaded', function() {
-  auth.onAuthStateChanged(user => { /* ... 이전과 동일 ... */ });
+  auth.onAuthStateChanged(user => {
+    updateLoginUI(user);
+    const activeTabLink = document.querySelector('.sidebar a.active');
+    let activeTabId = 'dashboard'; // 기본값
+    if (activeTabLink) {
+        const href = activeTabLink.getAttribute('href');
+        if(href) activeTabId = href.substring(1);
+    }
+    // 현재 URL 해시를 우선적으로 사용
+    const hashTab = window.location.hash ? window.location.hash.substring(1) : null;
+    if (hashTab && ['dashboard', 'input', 'detailTrans', 'tax', 'taxDetail', 'assets', 'taxReport', 'qna', 'settings'].includes(hashTab)) {
+        activeTabId = hashTab;
+    }
+    
+    if (window.renderFunctionForTab) {
+        window.renderFunctionForTab(activeTabId);
+    }
+  });
 
-  // 기본 날짜 설정 (대시보드 및 입력폼)
   const todayStr = formatDate(new Date(), 'yyyy-mm-dd');
-  const initialPeriod = getPeriodDates('month'); // 초기 '이번달'
-
+  const initialPeriod = getPeriodDates('month');
   const fromDateEl = document.getElementById('fromDate');
   if (fromDateEl) fromDateEl.value = initialPeriod.start;
   const toDateEl = document.getElementById('toDate');
   if (toDateEl) toDateEl.value = initialPeriod.end;
   
-  const inputDateEl = document.getElementById('inputDate'); // 거래입력 탭의 날짜 필드 ID 확인
-  if (inputDateEl) inputDateEl.value = todayStr;
+  const inputDateHtmlEl = document.getElementById('inputDateHtml'); // ★★★ HTML ID 'inputDateHtml' 사용 ★★★
+  if (inputDateHtmlEl) inputDateHtmlEl.value = todayStr;
 
   document.querySelectorAll('.quick-btn-row button').forEach(btn => {
       if (btn.dataset.period === 'month') btn.classList.add('active');
       else btn.classList.remove('active');
   });
   
-  // SDK 초기화 (API 키 입력 필수!)
-  try {
-    // Kakao.init('YOUR_KAKAO_JAVASCRIPT_KEY'); // ★★★ 실제 카카오 JS 키로 변경 ★★★
-    // if (!Kakao.isInitialized()) console.warn("Kakao SDK 초기화 실패.");
-    // else console.log("Kakao SDK Initialized.");
-  } catch (e) { console.error("Kakao SDK init error:", e); }
-  // initializeNaverLogin(); // 네이버 로그인은 필요시 호출 또는 특정 페이지에서만 초기화
+  // Kakao SDK 초기화 제거
+  
+  initializeNaverLogin(); // 네이버 로그인 초기화
 
-  // 이벤트 리스너 (이전과 동일, ID 변경된 것 확인)
-  // ... (모든 addEventListener 호출 확인 및 필요한 경우 ID 업데이트) ...
   document.getElementById('userAvatar')?.addEventListener('click', toggleProfileDropdown);
   document.getElementById('loginMainBtn')?.addEventListener('click', openLoginPopup);
   document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
-  document.getElementById('kakaoLoginBtn')?.addEventListener('click', signInWithKakao);
+  // Kakao 로그인 버튼 리스너 제거
   document.getElementById('naverLoginBtn')?.addEventListener('click', signInWithNaver);
+  
   document.getElementById('logoutBtn')?.addEventListener('click', () => auth.signOut());
+
   document.getElementById('addEntryForm')?.addEventListener('submit', handleAddEntry);
   document.getElementById('transPeriodForm')?.addEventListener('submit', handleFilterTransByPeriod);
   document.getElementById('exportDetailTransBtn')?.addEventListener('click', handleExportDetailTrans);
@@ -264,8 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('bizType')?.addEventListener('change', (e) => handleToggleBizTypeInput(e.target));
   document.getElementById('addQnaForm')?.addEventListener('submit', handleAddQna);
   document.querySelector('.quick-btn-row')?.addEventListener('click', handleQuickPeriodFilter);
+  
   document.getElementById('fromDate')?.addEventListener('change', renderDashboard);
   document.getElementById('toDate')?.addEventListener('change', renderDashboard);
-
-  // 초기 탭 로드 (index.html의 인라인 스크립트에서 처리)
 });
