@@ -376,40 +376,94 @@ function signInWithNaver() {
     }
 }
 
+// script.js (수정된 initializeNaverLogin 함수)
+
+let naverLoginInstance; // naverLoginInstance를 함수 외부에서도 접근 가능하도록 선언 (이미 되어 있다면 유지)
+
 function initializeNaverLogin() {
     try {
         if (typeof naver !== "undefined" && typeof naver.LoginWithNaverId !== "undefined") {
             naverLoginInstance = new naver.LoginWithNaverId({
-                clientId: "hyIyx5ajznMculp0VBZO", // 사용자 제공 Client ID
-                callbackUrl: "https://parkgi1100.github.io/biz-manager/", // 사용자 제공 콜백 URL
+                clientId: "hyIyx5ajznMculp0VBZO", // 사용자님 Client ID
+                callbackUrl: "https://parkgi1100.github.io/biz-manager/", // 사용자님 콜백 URL
                 isPopup: false, 
             });
             naverLoginInstance.init();
-            console.log("Naver Login SDK Initialized.");
+            console.log("Naver Login SDK Initialized with Client ID:", "hyIyx5ajznMculp0VBZO", "and Callback URL:", "https://parkgi1100.github.io/biz-manager/");
 
             naverLoginInstance.getLoginStatus(function (status) {
                 if (status) {
-                    console.log("Naver user is logged in.");
+                    console.log("Naver user is logged in (from getLoginStatus).");
+                    // const naverUser = naverLoginInstance.user;
+                    // const userEmail = naverUser.getEmail(); // 필요시 사용
+                    
                     if (naverLoginInstance.accessToken && naverLoginInstance.accessToken.accessToken) {
                         const naverAccessToken = naverLoginInstance.accessToken.accessToken;
-                        console.log("Naver Access Token:", naverAccessToken);
-                        // !!! 중요: 여기서부터 Firebase Custom Authentication 흐름 시작 (백엔드 필요) !!!
-                        alert("네이버 로그인 성공 (클라이언트 측)! Firebase 연동을 위해서는 백엔드에서 Custom Token 발급이 필요합니다.");
+                        console.log("Naver Access Token (from instance):", naverAccessToken);
+                        
+                        // ▼▼▼ 여기에 백엔드(Cloud Function) 호출 코드를 붙여넣습니다! ▼▼▼
+                        console.log("Sending Naver Access Token to backend for Firebase custom token...");
+                        
+                        // 중요: 'YOUR_CLOUD_FUNCTION_URL'은 다음 단계에서 만들 Cloud Function의 실제 URL로 바꿔야 합니다.
+                        // (Firebase SDK의 functions().httpsCallable()을 사용하는 것이 더 권장되지만, 우선 fetch로 설명드립니다.)
+                        fetch('YOUR_CLOUD_FUNCTION_URL_HERE/createFirebaseTokenWithNaver', { 
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ token: naverAccessToken }), // 네이버 액세스 토큰 전송
+                        })
+                        .then(response => {
+                            if (!response.ok) { // HTTP 상태 코드가 200-299 범위가 아닐 때
+                                return response.json().then(errData => {
+                                    // 서버에서 JSON 형태의 에러 메시지를 보냈을 경우
+                                    throw new Error(errData.error || `서버 응답 오류: ${response.status}`);
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.firebaseToken) {
+                                console.log("Received Firebase Custom Token:", data.firebaseToken);
+                                // 백엔드로부터 Firebase Custom Token을 받음
+                                auth.signInWithCustomToken(data.firebaseToken)
+                                    .then((userCredential) => {
+                                        // Firebase에 최종 로그인 성공!
+                                        console.log("Firebase Naver Custom Login 성공:", userCredential.user);
+                                        closeLoginPopup(); // 로그인 팝업 닫기
+                                        // auth.onAuthStateChanged 리스너가 UI를 업데이트할 것입니다.
+                                    })
+                                    .catch((error) => {
+                                        console.error("Firebase Custom Login Error (signInWithCustomToken):", error);
+                                        alert(`Firebase 로그인에 실패했습니다: ${error.message}`);
+                                    });
+                            } else {
+                                console.error("Firebase Custom Token was not received:", data.error || '알 수 없는 응답 오류');
+                                alert(`Firebase 토큰 발급에 실패했습니다: ${data.error || '알 수 없는 응답 오류'}`);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error calling Cloud Function or processing response:", error);
+                            alert(`서버 통신 중 오류가 발생했습니다: ${error.message}`);
+                        });
+                        // ▲▲▲ 여기까지 백엔드(Cloud Function) 호출 코드입니다. ▲▲▲
+
                     } else {
-                         console.warn("Naver Access Token not found after login. Check callback handling or if this is the callback redirect.");
+                        console.warn("Naver Access Token not found in instance. Check callback handling or if this is the callback redirect.");
                     }
                 } else {
-                    console.log("Naver user is not logged in (getLoginStatus).");
+                    console.log("Naver user is not logged in (or getLoginStatus call failed).");
                 }
             });
         } else {
-          console.warn("Naver SDK not loaded or 'naver' object is not available.");
+          console.warn("Naver SDK not loaded, or 'naver' object is not available.");
         }
     } catch (e) {
         console.error("Naver Login SDK 초기화 중 오류 발생:", e);
     }
 }
 
+// ... (파일 하단 다른 코드들은 그대로) ...
 // ======================= DOMContentLoaded - 초기화 및 이벤트 리스너 =======================
 document.addEventListener('DOMContentLoaded', function() {
   // 사이드바 토글 로직 (인라인 스크립트에서 이전)
