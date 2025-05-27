@@ -11,10 +11,10 @@
   
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.1/kakao.min.js"></script>
-</head>
+  <script type="text/javascript" src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" charset="utf-8"></script>
+  </head>
 <body>
 
   <button id="toggleBtn" class="hamburger fixed-ui">≡</button>
@@ -42,9 +42,6 @@
       <h3 class="popup-title">로그인</h3>
       <button class="social-btn google" id="googleLoginBtn">
         <img src="img/google-logo.svg" alt="Google logo" /> Google 계정으로 로그인
-      </button>
-      <button class="social-btn kakao" id="kakaoLoginBtn">
-        <img src="img/kakao-logo.svg" alt="Kakao logo" /> 카카오 계정으로 로그인
       </button>
       <button class="social-btn naver" id="naverLoginBtn">
         <img src="img/naver-logo.svg" alt="Naver logo" /> 네이버 아이디로 로그인
@@ -153,8 +150,7 @@
           <form class="entry-form card" id="addEntryForm">
             <div class="form-grid">
                 <div class="form-group full-width">
-                    <label for="inputDate">거래일자*</label>
-                    <input type="date" id="inputDate" class="custom-date-input" required aria-label="거래일자"/>
+                    <label for="inputDateHtml">거래일자*</label> <input type="date" id="inputDateHtml" class="custom-date-input" required aria-label="거래일자"/>
                 </div>
                 <div class="form-group">
                     <label for="inputType">구분*</label>
@@ -213,7 +209,7 @@
             <header class="tab-header"><h1>고정자산 관리</h1></header>
             <div class="card">
                 <p>고정자산 내역을 기록하고 감가상각을 관리합니다. (UI 및 기능 개발 예정)</p>
-                </div>
+            </div>
         </div>
 
         <div id="detailTransTab" class="tab">
@@ -270,7 +266,7 @@
           </section>
         </div>
         
-         <div id="taxDetailTab" class="tab">
+        <div id="taxDetailTab" class="tab">
             <header class="tab-header"><h1>세금계산서 상세</h1></header>
             <form id="taxPeriodForm" class="filter-form card">
                 <input type="date" id="taxFromDate" class="custom-date-input" aria-label="조회 시작일" />
@@ -287,7 +283,8 @@
 
         <div id="taxReportTab" class="tab">
             <header class="tab-header"><h1>세무신고 자료</h1></header>
-            <form id="taxReportForm" class="entry-form card"> <div class="form-group"><label for="bizName">사업자명</label><input type="text" id="bizName" required></div>
+            <form id="taxReportForm" class="entry-form card">
+                <div class="form-group"><label for="bizName">사업자명</label><input type="text" id="bizName" required></div>
                 <div class="form-group"><label for="ownerName">대표자명</label><input type="text" id="ownerName" required></div>
                 <div class="form-group"><label for="bizNum">사업자등록번호</label><input type="text" id="bizNum" required></div>
                 <div class="form-group">
@@ -326,7 +323,7 @@
             </section>
         </div>
       </div> </div> </div> <script>
-    // 인라인 스크립트 (이전과 동일)
+    // 인라인 스크립트 (탭 전환 및 사이드바 토글 로직)
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     const toggleBtn = document.getElementById('toggleBtn');
@@ -352,7 +349,7 @@
       const activeTab = document.getElementById(tabId + 'Tab');
       if (activeTab) activeTab.classList.add('active');
 
-      const activeLink = document.querySelector(`.sidebar a[href="#${tabId}"]`); // href 기반으로 변경
+      const activeLink = document.querySelector(`.sidebar a[href="#${tabId}"]`);
       if (activeLink) activeLink.classList.add('active');
       
       if (sidebar && sidebar.classList.contains('show') && window.innerWidth < 768) {
@@ -363,9 +360,8 @@
       if (typeof window.renderFunctionForTab === 'function') {
         window.renderFunctionForTab(tabId);
       }
-       // 탭 변경 시 스크롤 최상단으로 (선택적)
       if(mainContentArea) mainContentArea.scrollTop = 0;
-      window.scrollTo(0,0); // 페이지 전체 스크롤도 최상단
+      window.scrollTo(0,0);
     }
     
     document.addEventListener('DOMContentLoaded', () => {
@@ -376,20 +372,29 @@
         } else {
             showTab('dashboard');
         }
+        // 사이드바 링크 클릭 시 해시 변경 (showTab은 onclick으로 이미 호출됨)
         document.querySelectorAll('.sidebar a').forEach(link => {
             link.addEventListener('click', function(e) {
-                // showTab 함수가 이미 onclick에 연결되어 있으므로, 여기서는 해시 변경만 처리
-                // const tabName = this.getAttribute('href').substring(1); // href에서 # 제거
-                // if (tabName) window.location.hash = tabName; // 해시 변경
+                 const tabName = this.getAttribute('href').substring(1);
+                 if (tabName && window.location.hash !== `#${tabName}`) { // 현재 해시와 다를 때만 변경
+                    window.location.hash = tabName;
+                 }
             });
         });
-         // 뒤로가기/앞으로가기로 해시 변경 시 탭 자동 전환
+        // 뒤로가기/앞으로가기로 해시 변경 시 탭 자동 전환
         window.addEventListener('hashchange', () => {
             const hashTab = window.location.hash.substring(1);
             if (validTabs.includes(hashTab)) {
-                showTab(hashTab);
+                // 현재 활성화된 탭과 다를 경우에만 showTab 호출 (중복 호출 방지)
+                const currentActiveLink = document.querySelector('.sidebar a.active');
+                const currentActiveTabId = currentActiveLink ? currentActiveLink.getAttribute('href').substring(1) : null;
+                if (hashTab !== currentActiveTabId) {
+                    showTab(hashTab);
+                }
+            } else if (window.location.hash === '' || window.location.hash === '#') { // 해시가 없을 경우 대시보드로
+                showTab('dashboard');
             }
-        });
+        }, false);
     });
   </script>
  <script src="script.js"></script>
