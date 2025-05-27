@@ -11,7 +11,8 @@
   
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-functions-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-functions-compat.js"></script> {/* Firebase Functions SDK 추가됨 */}
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="text/javascript" src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" charset="utf-8"></script>
   </head>
@@ -57,7 +58,7 @@
           </div>
         </button>
       <button class="social-btn naver" id="naverLoginBtn">
-        <img src="img/naver-logo.png" alt="Naver logo" /> 네이버 아이디로 로그인
+        <img src="img/naver-logo.svg" alt="Naver logo" /> 네이버 아이디로 로그인
       </button>
       <button class="close-popup-btn" id="closeLoginPopupBtn">닫기</button>
     </div>
@@ -331,6 +332,106 @@
                 <ul id="qnaList"></ul>
             </section>
         </div>
-      </div> </div> </div> <script src="script.js"></script>
-</body>
+      </div> </div> </div> <script>
+    // 인라인 스크립트: 사이드바 토글, 탭 전환 기본 로직
+    // 이 스크립트는 script.js 파일 로드 전에 실행될 수 있으므로,
+    // script.js에 정의된 함수(예: window.renderFunctionForTab)를 호출하려면
+    // 해당 함수들이 script.js에서 window 객체에 할당되어 있어야 합니다.
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const mainContentArea = document.getElementById('mainContentArea');
+    const validTabs = ['dashboard', 'input', 'detailTrans', 'tax', 'taxDetail', 'assets', 'taxReport', 'qna', 'settings'];
+
+    if (toggleBtn) {
+      toggleBtn.onclick = () => {
+        sidebar.classList.toggle('show');
+        overlay.classList.toggle('show');
+        // body 클래스 토글은 script.js의 DOMContentLoaded에서 처리하여
+        // CSS 미디어쿼리와 연동된 콘텐츠 밀림 효과를 제어합니다.
+        // script.js가 로드된 후 해당 로직이 실행될 것입니다.
+        if (typeof window.toggleBodySidebarClass === 'function') {
+            window.toggleBodySidebarClass();
+        }
+      };
+    }
+
+    if (overlay) {
+      overlay.onclick = () => {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('show');
+        if (typeof window.removeBodySidebarClass === 'function') {
+            window.removeBodySidebarClass();
+        }
+      };
+    }
+
+    // showTab 함수는 이제 script.js에서 window.showTab으로 정의되고 관리됩니다.
+    // HTML onclick="showTab('...')" 에서 호출됩니다.
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentHash = window.location.hash;
+
+      // 네이버 로그인 콜백인지 먼저 확인 (URL에 access_token 포함 여부)
+      // 이 부분은 script.js의 initializeNaverLogin() 내 getLoginStatus에서 주로 처리됩니다.
+      // 여기서는 네이버 콜백 해시가 탭 이름으로 오인되어 showTab('dashboard')로 강제 변경되는 것을 방지하는 목적.
+      if (currentHash.includes("access_token=") && (currentHash.includes("token_type=bearer") || currentHash.includes("naver"))) {
+          console.log("index.html (inline): Naver login callback hash detected. Allowing Naver SDK in script.js to process.");
+          // script.js의 initializeNaverLogin()이 해시를 처리하도록 여기서 URL 변경이나 showTab 호출을 하지 않음.
+      } else {
+          // 일반적인 탭 초기화 로직
+          const initialTab = currentHash ? currentHash.substring(1) : 'dashboard';
+          if (validTabs.includes(initialTab)) {
+              if (typeof window.showTab === 'function') window.showTab(initialTab);
+              else console.warn("showTab function not ready on DOMContentLoaded (inline script).");
+          } else {
+              if (typeof window.showTab === 'function') window.showTab('dashboard');
+              else console.warn("showTab function not ready on DOMContentLoaded (inline script).");
+              // 불필요하거나 의도치 않은 해시 변경을 방지
+              // if(window.location.hash && window.location.hash !== '#dashboard' && !currentHash.includes("access_token=")) {
+              //    window.location.hash = '#dashboard';
+              // }
+          }
+      }
+
+      // 사이드바 링크 클릭 시 해시 변경 (showTab은 onclick으로 이미 호출됨)
+      // 이 부분은 script.js로 옮겨서 더 일관되게 관리하는 것이 좋습니다.
+      document.querySelectorAll('.sidebar a').forEach(link => {
+          link.addEventListener('click', function(e) {
+               const tabName = this.getAttribute('href').substring(1);
+               if (tabName && window.location.hash !== `#${tabName}` && !window.location.hash.includes("access_token=")) {
+                  window.location.hash = tabName; // 네이버 콜백 중이 아닐 때만 해시 변경
+               }
+          });
+      });
+      
+      // 뒤로가기/앞으로가기로 해시 변경 시 탭 자동 전환
+      window.addEventListener('hashchange', () => {
+        const newHash = window.location.hash;
+        // 네이버 콜백 해시와 충돌 방지
+        if (newHash.includes("access_token=") && (newHash.includes("token_type=bearer") || newHash.includes("naver")) ) {
+            console.log("index.html (inline): Hash changed, but it looks like a Naver callback. SDK should handle.");
+            return; 
+        }
+
+        const hashTab = newHash ? newHash.substring(1) : 'dashboard';
+        const currentActiveLink = document.querySelector('.sidebar a.active');
+        const currentActiveTabId = currentActiveLink ? currentActiveLink.getAttribute('href').substring(1) : null;
+
+        if (validTabs.includes(hashTab)) {
+            if (hashTab !== currentActiveTabId) {
+                if (typeof window.showTab === 'function') window.showTab(hashTab);
+                else console.warn("showTab function not available on hashchange (inline script).");
+            }
+        } else if (newHash === '' || newHash === '#') {
+            if (currentActiveTabId !== 'dashboard') {
+                if (typeof window.showTab === 'function') window.showTab('dashboard');
+                else console.warn("showTab function not available on hashchange (inline script).");
+            }
+        }
+      }, false);
+    });
+  </script>
+ <script src="script.js"></script> </body>
 </html>
