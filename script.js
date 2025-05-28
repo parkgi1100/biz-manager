@@ -2,13 +2,13 @@
 
 // ======================= Firebase 설정 =======================
 const firebaseConfig = {
-  apiKey: "YOUR_ACTUAL_API_KEY", // ★★★ 실제 API 키로 반드시 변경하세요! ★★★
-  authDomain: "YOUR_ACTUAL_AUTH_DOMAIN", // ★★★ 실제 값으로 변경 ★★★
-  projectId: "YOUR_ACTUAL_PROJECT_ID",   // ★★★ 실제 값으로 변경 ★★★
-  storageBucket: "YOUR_ACTUAL_STORAGE_BUCKET", // ★★★ 실제 값으로 변경 ★★★
-  messagingSenderId: "YOUR_ACTUAL_MESSAGING_SENDER_ID", // ★★★ 실제 값으로 변경 ★★★
-  appId: "YOUR_ACTUAL_APP_ID", // ★★★ 실제 값으로 변경 ★★★
-  measurementId: "YOUR_ACTUAL_MEASUREMENT_ID" // Optional
+  apiKey: "AIzaSyDIW89Y0Z5JPG4dBjoIDAofgy4XlAmQ7Jw", // 실제 키로 사용 중이신 것으로 보입니다. 보안에 유의하세요.
+  authDomain: "bizdash-7c6fd.firebaseapp.com",
+  projectId: "bizdash-7c6fd",
+  storageBucket: "bizdash-7c6fd.firebasestorage.app",
+  messagingSenderId: "765405833459",
+  appId: "1:765405833459:web:750f2189c77ac0353c2f86",
+  measurementId: "G-W31FKJJSSG"
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
