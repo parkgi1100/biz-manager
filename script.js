@@ -1,8 +1,8 @@
-// BizDash - script.js (최종 종합 코드)
+// BizDash - script.js (카카오 제거, 날짜 ID 수정 반영)
 
 // ======================= Firebase 설정 =======================
 const firebaseConfig = {
-  apiKey: "AIzaSyDIW89Y0Z5JPG4dBjoIDAofgy4XlAmQ7Jw", // 실제 키 (보안 유의)
+  apiKey: "AIzaSyDIW89Y0Z5JPG4dBjoIDAofgy4XlAmQ7Jw", // 실제 키로 사용 중이신 것으로 보입니다. 보안에 유의하세요.
   authDomain: "bizdash-7c6fd.firebaseapp.com",
   projectId: "bizdash-7c6fd",
   storageBucket: "bizdash-7c6fd.firebasestorage.app",
@@ -10,11 +10,9 @@ const firebaseConfig = {
   appId: "1:765405833459:web:750f2189c77ac0353c2f86",
   measurementId: "G-W31FKJJSSG"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-// Firebase Cloud Functions 초기화 (리전은 배포한 리전에 맞게 수정)
-const functions = firebase.app().functions('asia-northeast3'); // 예: 서울 리전
+const functions = firebase.app().functions('asia-northeast3'); // Firebase Functions 초기화
 
 // ======================= 전역 변수 및 상태 =======================
 let entries = JSON.parse(localStorage.getItem('bizdash_entries') || "[]");
@@ -22,7 +20,7 @@ let taxEntriesData = JSON.parse(localStorage.getItem('bizdash_taxEntries') || "[
 let qnaEntries = JSON.parse(localStorage.getItem('bizdash_qnaEntries') || "[]");
 let fixedAssets = JSON.parse(localStorage.getItem('bizdash_fixedAssets') || "[]");
 let currentChartInstance = null;
-let naverLoginInstance; // 네이버 로그인 인스턴스
+let naverLoginInstance;
 
 // ======================= 유틸리티 함수 =======================
 function formatDate(dateInput, format = 'yyyy-mm-dd') {
@@ -96,15 +94,85 @@ function updateLoginUI(user) {
   }
 }
 
-function renderDashboard() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function renderInputTabList() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function summarizeTransactions(transactionArray) { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function renderDetailTrans() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function renderTaxList() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function summarizeTaxEntries(taxArray) { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function renderTaxDetail() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function renderAssetsTab() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function renderQnaList() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
+function renderDashboard() { 
+    // (이전 답변의 최종 제안 코드와 동일하게 유지 - 너무 길어서 생략)
+    // 주요 변경점: 월별 수입/지출 차트, 주요 수익/지출 Top3 표시, 전년 동기 대비 제거
+    console.log("Rendering Dashboard (at-a-glance focus)...");
+    const fromDateVal = document.getElementById('fromDate').value;
+    const toDateVal = document.getElementById('toDate').value;
+
+    const filteredEntries = entries.filter(e => 
+        (!fromDateVal || e.date >= fromDateVal) && (!toDateVal || e.date <= toDateVal)
+    );
+
+    const summary = summarizeTransactions(filteredEntries);
+    document.getElementById('incomeSum').textContent = formatCurrency(summary.income);
+    document.getElementById('expenseSum').textContent = formatCurrency(summary.expense);
+    document.getElementById('profitSum').textContent = formatCurrency(summary.profit);
+
+    const recentListUl = document.getElementById('recentList');
+    if (recentListUl) {
+        recentListUl.innerHTML = '';
+        if (filteredEntries.length === 0) {
+            recentListUl.innerHTML = '<li class="empty-list-message">거래 내역이 없습니다.</li>';
+        } else {
+            filteredEntries.slice(-4).reverse().forEach(e => {
+                recentListUl.innerHTML += `
+                    <li class="dashboard-recent-item">
+                        <span class="item-date">${formatDate(e.date, 'mm.dd')}</span>
+                        <span class="item-category" title="${e.category || ''}">${e.category || '미분류'}</span>
+                        <span class="item-amount ${String(e.type).toLowerCase()}">${e.type === 'income' ? '+' : '-'}${formatCurrency(e.amount).replace('₩','')}</span>
+                    </li>`;
+            });
+        }
+    }
+
+    const chartCanvas = document.getElementById('trendChart');
+    if (chartCanvas && typeof Chart !== 'undefined') {
+        if (currentChartInstance) currentChartInstance.destroy();
+        const monthlyData = {};
+        filteredEntries.forEach(e => {
+            const monthKey = e.date.substring(0, 7);
+            if (!monthlyData[monthKey]) monthlyData[monthKey] = { income: 0, expense: 0 };
+            if (String(e.type).toLowerCase() === 'income') monthlyData[monthKey].income += Number(e.amount);
+            else if (String(e.type).toLowerCase() === 'expense') monthlyData[monthKey].expense += Number(e.amount);
+        });
+        const sortedMonthKeys = Object.keys(monthlyData).sort();
+        const chartLabels = sortedMonthKeys.map(monthKey => `${monthKey.slice(2,4)}년 ${monthKey.slice(5,7)}월`);
+        const incomeDataset = sortedMonthKeys.map(monthKey => monthlyData[monthKey].income);
+        const expenseDataset = sortedMonthKeys.map(monthKey => monthlyData[monthKey].expense);
+
+        currentChartInstance = new Chart(chartCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: chartLabels.length > 0 ? chartLabels : ['데이터 없음'],
+                datasets: [
+                    { label: '월별 총수입', data: incomeDataset.length > 0 ? incomeDataset : [0], backgroundColor: 'rgba(31, 136, 61, 0.6)', borderColor: 'var(--income-color)', borderWidth: 1 },
+                    { label: '월별 총지출', data: expenseDataset.length > 0 ? expenseDataset : [0], backgroundColor: 'rgba(207, 34, 46, 0.6)', borderColor: 'var(--expense-color)', borderWidth: 1 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: value => formatCurrency(value).replace('₩','')+'원' } }, x: { grid: { display: false } } }, plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false, callbacks: { label: context => `${context.dataset.label}: ${formatCurrency(context.raw)}` } } } }
+        });
+    } else if (!chartCanvas) {
+        console.warn("trendChart canvas not found.");
+    } else if (typeof Chart === 'undefined') {
+        console.warn("Chart.js library not loaded.");
+    }
+    
+    const topIncomeItemsListUl = document.getElementById('topIncomeItemsList');
+    if (topIncomeItemsListUl) { /* ... (주요 수익 항목 로직) ... */ }
+    const bestExpenseItemsListUl = document.getElementById('bestExpenseItemsList');
+    if (bestExpenseItemsListUl) { /* ... (주요 지출 항목 로직) ... */ }
+}
+
+function renderInputTabList() { /* ... 이전과 동일 ... */ }
+function summarizeTransactions(transactionArray) { /* ... 이전과 동일 ... */ }
+function renderDetailTrans() { /* ... 이전과 동일 ... */ }
+function renderTaxList() { /* ... 이전과 동일 ... */ }
+function summarizeTaxEntries(taxArray) { /* ... 이전과 동일 ... */ }
+function renderTaxDetail() { /* ... 이전과 동일 ... */ }
+function renderAssetsTab() { /* ... 이전과 동일 ... */ }
+function renderQnaList() { /* ... 이전과 동일 ... */ }
 function renderSettings() { console.log("Settings tab - TBD"); }
 
 window.renderFunctionForTab = function(tabId) {
@@ -116,7 +184,7 @@ window.renderFunctionForTab = function(tabId) {
         case 'tax': renderTaxList(); break;
         case 'taxDetail': renderTaxDetail(); break;
         case 'assets': renderAssetsTab(); break;
-        case 'taxReport': break;
+        case 'taxReport': break; // 폼 위주
         case 'qna': renderQnaList(); break;
         case 'settings': renderSettings(); break;
         default: console.warn("No render function for tab:", tabId);
@@ -145,20 +213,18 @@ function toggleProfileDropdown() {
 function closeProfileDropdownOutside(event) {
   const profileMenuDiv = document.getElementById('profileMenu');
   const drop = document.getElementById('profileDropdown');
-  if (drop && drop.classList.contains('show') && !profileMenuDiv.contains(event.target)) {
+  // 클릭된 요소가 프로필 메뉴 자신이거나 그 자식 요소가 아니고, 현재 드롭다운이 열려있다면 닫음
+  if (drop && drop.classList.contains('show') && profileMenuDiv && !profileMenuDiv.contains(event.target)) {
     drop.classList.remove('show');
     document.removeEventListener('click', closeProfileDropdownOutside, true);
   }
 }
 
-const closeLoginPopupBtn = document.getElementById('closeLoginPopupBtn');
-if (closeLoginPopupBtn) closeLoginPopupBtn.onclick = closeLoginPopup;
-
 function handleAddEntry(event) {
   event.preventDefault();
   const entryData = {
     id: Date.now(),
-    date: document.getElementById('inputDateHtml').value,
+    date: document.getElementById('inputDateHtml').value, // ★★★ ID 수정 ★★★
     type: document.getElementById('inputType').value,
     amount: Number(document.getElementById('inputAmount').value),
     category: document.getElementById('inputCategory').value.trim(),
@@ -174,24 +240,24 @@ function handleAddEntry(event) {
   renderInputTabList();
   if (document.getElementById('dashboardTab')?.classList.contains('active')) renderDashboard();
   event.target.reset();
-  const inputDateElem = document.getElementById('inputDateHtml');
+  const inputDateElem = document.getElementById('inputDateHtml'); // ★★★ ID 수정 ★★★
   if(inputDateElem) inputDateElem.value = formatDate(new Date(), 'yyyy-mm-dd');
 }
 
 function handleFilterTransByPeriod(event) { event.preventDefault(); renderDetailTrans(); }
-function exportToCsv(filename, headers, dataRows) { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function handleExportDetailTrans() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function handleAddTaxEntry(event) { /* ... 이전 답변의 최종 제안 코드와 동일 (taxDate ID 사용) ... */ }
+function exportToCsv(filename, headers, dataRows) { /* ... 이전과 동일 ... */ }
+function handleExportDetailTrans() { /* ... 이전과 동일 ... */ }
+function handleAddTaxEntry(event) { /* ... 이전과 동일 (taxDate ID 사용) ... */ }
 function handleFilterTaxByPeriod(event) { event.preventDefault(); renderTaxDetail(); }
-function handleExportTaxDetail() { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
+function handleExportTaxDetail() { /* ... 이전과 동일 ... */ }
 
-const NTS_EXPENSE_CATEGORIES = { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ };
-function mapToNtsExpenseCategory(userCategory) { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function handleDownloadTaxReport(event) { /* ... 이전 답변의 '간편장부 소득금액계산서' 양식 CSV 생성 로직 ... */ }
+const NTS_EXPENSE_CATEGORIES = { /* ... 이전과 동일 ... */ };
+function mapToNtsExpenseCategory(userCategory) { /* ... 이전과 동일 ... */ }
+function handleDownloadTaxReport(event) { /* ... 이전과 동일 ('간편장부 소득금액계산서' CSV 생성) ... */ }
 
-function handleAddQna(event) { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function handleToggleBizTypeInput(selectElement) { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
-function handleQuickPeriodFilter(event) { /* ... 이전 답변의 최종 제안 코드와 동일 ... */ }
+function handleAddQna(event) { /* ... 이전과 동일 ... */ }
+function handleToggleBizTypeInput(selectElement) { /* ... 이전과 동일 ... */ }
+function handleQuickPeriodFilter(event) { /* ... 이전과 동일 ... */ }
 
 // ======================= Firebase Social Login Functions =======================
 function signInWithGoogle() {
@@ -201,7 +267,7 @@ function signInWithGoogle() {
     .catch((error) => { console.error("Google 로그인 오류:", error); alert(`Google 로그인 실패: ${error.message}. Firebase 콘솔에서 Google 로그인을 활성화했는지 확인하세요.`); });
 }
 
-// 카카오 로그인 함수는 제거됨
+// 카카오 로그인 함수 및 관련 호출은 모두 제거됨
 
 function signInWithNaver() {
     if (!naverLoginInstance) {
@@ -222,6 +288,7 @@ function initializeNaverLogin() {
                 clientId: "hyIyx5ajznMculp0VBZO", // 사용자 제공 Client ID
                 callbackUrl: "https://parkgi1100.github.io/biz-manager/", // 사용자 제공 콜백 URL
                 isPopup: false, 
+                // loginButton: {color: "green", type: 3, height: 40} // 직접 만든 버튼 사용하므로 제거
             });
             naverLoginInstance.init();
             console.log("Naver Login SDK Initialized.");
@@ -233,9 +300,7 @@ function initializeNaverLogin() {
                         const naverAccessToken = naverLoginInstance.accessToken.accessToken;
                         console.log("Naver Access Token (from instance):", naverAccessToken.substring(0,10)+"...");
                         
-                        // ▼▼▼ Cloud Function 호출 (httpsCallable 사용) ▼▼▼
                         console.log("Calling Cloud Function 'createFirebaseTokenWithNaver' using httpsCallable...");
-                        
                         const createTokenFunction = functions.httpsCallable('createFirebaseTokenWithNaver'); 
                         
                         createTokenFunction({ token: naverAccessToken })
@@ -257,8 +322,6 @@ function initializeNaverLogin() {
                                 console.error("Error calling Cloud Function or signing in with custom token:", error);
                                 alert(`네이버를 통한 Firebase 로그인 중 오류 발생: ${error.message}`);
                             });
-                        // ▲▲▲ 여기까지 Cloud Function 호출 코드 ▲▲▲
-
                     } else {
                         console.warn("Naver Access Token not found in instance. Check callback handling.");
                     }
@@ -276,17 +339,16 @@ function initializeNaverLogin() {
 
 // ======================= DOMContentLoaded - 초기화 및 이벤트 리스너 =======================
 document.addEventListener('DOMContentLoaded', function() {
-  // 사이드바 토글 및 탭 전환 로직 (인라인 스크립트에서 이전)
+  // 사이드바 토글 로직
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
   const toggleBtn = document.getElementById('toggleBtn');
-  const mainContentArea = document.getElementById('mainContentArea'); // mainContentArea 정의 추가
 
   if (toggleBtn) {
     toggleBtn.onclick = () => {
       sidebar.classList.toggle('show');
       overlay.classList.toggle('show');
-      if (window.innerWidth >= 600) { // CSS 미디어쿼리와 동일 조건
+      if (window.innerWidth >= 600) {
           document.body.classList.toggle('sidebar-open');
       }
     };
@@ -301,7 +363,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
   
+  // 탭 전환 함수 (전역으로 노출)
   window.showTab = function(tabId) {
+      const mainContentArea = document.getElementById('mainContentArea');
       document.querySelectorAll('.tab').forEach(tabElement => tabElement.classList.remove('active'));
       document.querySelectorAll('.sidebar a').forEach(linkElement => linkElement.classList.remove('active'));
 
@@ -324,60 +388,47 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   const validTabs = ['dashboard', 'input', 'detailTrans', 'tax', 'taxDetail', 'assets', 'taxReport', 'qna', 'settings'];
-  function handleHashChange() {
-    const hashTab = window.location.hash ? window.location.hash.substring(1) : 'dashboard';
+  
+  function handleInitialTabAndHash() {
+    const currentHash = window.location.hash;
+    if (currentHash.includes("access_token=") && (currentHash.includes("token_type=bearer") || currentHash.includes("state="))) {
+        console.log("script.js (DOMContentLoaded): Naver login callback hash detected. Allowing Naver SDK to process.");
+        // Naver SDK가 처리하도록 여기서 탭 변경 안 함
+    } else {
+        const initialTab = currentHash ? currentHash.substring(1) : 'dashboard';
+        if (validTabs.includes(initialTab)) {
+            window.showTab(initialTab);
+        } else {
+            window.showTab('dashboard');
+            if(window.location.hash && window.location.hash !== '#dashboard' && !currentHash.includes("access_token=")) {
+               // window.location.hash = '#dashboard'; // 직접 변경보다는 showTab 내부에서 처리
+            }
+        }
+    }
+  }
+
+  window.addEventListener('hashchange', () => {
+    const newHash = window.location.hash;
+    if (newHash.includes("access_token=") && (newHash.includes("token_type=bearer") || newHash.includes("state="))) {
+        console.log("script.js (hashchange): Hash changed to Naver callback, SDK should handle.");
+        return; 
+    }
+    const hashTab = newHash ? newHash.substring(1) : 'dashboard';
     const currentActiveLink = document.querySelector('.sidebar a.active');
     const currentActiveTabId = currentActiveLink ? currentActiveLink.getAttribute('href').substring(1) : null;
 
     if (validTabs.includes(hashTab)) {
-        if (hashTab !== currentActiveTabId) {
-            showTab(hashTab);
-        }
-    } else if (currentActiveTabId !== 'dashboard' && (window.location.hash === '' || window.location.hash === '#')) {
-        showTab('dashboard'); // 해시가 없으면 대시보드로
-        window.location.hash = '#dashboard'; // URL도 업데이트
+        if (hashTab !== currentActiveTabId) window.showTab(hashTab);
+    } else if (newHash === '' || newHash === '#') {
+        if (currentActiveTabId !== 'dashboard') window.showTab('dashboard');
     }
-  }
+  }, false);
 
-  // 초기 탭 로드
-  const initialHash = window.location.hash ? window.location.hash.substring(1) : 'dashboard';
-  if (validTabs.includes(initialHash)) {
-    showTab(initialHash);
-  } else {
-    showTab('dashboard');
-    if(window.location.hash && window.location.hash !== '#dashboard') window.location.hash = '#dashboard'; // 잘못된 해시면 대시보드로
-  }
-
-  document.querySelectorAll('.sidebar a').forEach(link => {
-      link.addEventListener('click', function(e) {
-           // onclick="showTab(...)"이 이미 있으므로, 해시 변경만 처리하거나,
-           // onclick을 제거하고 여기서 showTab을 호출하고 해시를 변경할 수 있습니다.
-           // 현재는 HTML의 onclick을 우선으로 두고, 해시 변경 로직만 추가합니다.
-           const tabName = this.getAttribute('href').substring(1);
-           if (tabName && window.location.hash !== `#${tabName}`) {
-              // window.location.hash = tabName; // showTab에서 activeLink를 href로 찾으므로, showTab 호출 전에 해시 변경
-           }
-      });
-  });
-  window.addEventListener('hashchange', handleHashChange, false);
-
-  // --- 나머지 기존 DOMContentLoaded 내용 ---
+  // --- 나머지 DOMContentLoaded 내용 ---
   auth.onAuthStateChanged(user => {
     updateLoginUI(user);
-    // 현재 활성화된 탭의 내용을 다시 렌더링 (로그인/로그아웃 시 UI가 올바르게 업데이트되도록)
-    const activeTabLinkAfterAuth = document.querySelector('.sidebar a.active');
-    let activeTabIdAfterAuth = 'dashboard'; 
-    if (activeTabLinkAfterAuth) {
-        const href = activeTabLinkAfterAuth.getAttribute('href');
-        if(href && validTabs.includes(href.substring(1))) activeTabIdAfterAuth = href.substring(1);
-    }
-    const hashTabAfterAuth = window.location.hash ? window.location.hash.substring(1) : null;
-    if (hashTabAfterAuth && validTabs.includes(hashTabAfterAuth)) {
-        activeTabIdAfterAuth = hashTabAfterAuth;
-    }
-    if (window.renderFunctionForTab) {
-        window.renderFunctionForTab(activeTabIdAfterAuth); // 로그인 상태 변경 시 현재 탭 리프레시
-    }
+    // 로그인 상태 변경 시, 현재 해시 또는 기본 탭으로 콘텐츠 다시 로드
+    handleInitialTabAndHash(); // 현재 해시 기반으로 탭 콘텐츠를 다시 로드/렌더링
   });
 
   const todayStr = formatDate(new Date(), 'yyyy-mm-dd');
@@ -387,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const toDateEl = document.getElementById('toDate');
   if (toDateEl) toDateEl.value = initialPeriod.end;
   
-  const inputDateHtmlEl = document.getElementById('inputDateHtml');
+  const inputDateHtmlEl = document.getElementById('inputDateHtml'); // ★★★ ID 수정됨 ★★★
   if (inputDateHtmlEl) inputDateHtmlEl.value = todayStr;
 
   document.querySelectorAll('.quick-btn-row button').forEach(btn => {
@@ -395,12 +446,18 @@ document.addEventListener('DOMContentLoaded', function() {
       else btn.classList.remove('active');
   });
     
-  initializeNaverLogin();
+  initializeNaverLogin(); // 네이버 로그인 초기화
 
+  // 이벤트 리스너들
   document.getElementById('userAvatar')?.addEventListener('click', toggleProfileDropdown);
   document.getElementById('loginMainBtn')?.addEventListener('click', openLoginPopup);
+  const closePopupBtn = document.getElementById('closeLoginPopupBtn'); // 이미 위에서 const로 선언했으면 여기서 재선언 불필요
+  if (closePopupBtn) closePopupBtn.onclick = closeLoginPopup; // onclick 중복될 수 있으니 addEventListener 권장
+  
   document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
   document.getElementById('naverLoginBtn')?.addEventListener('click', signInWithNaver);
+  // 카카오 로그인 버튼 리스너는 제거됨
+  
   document.getElementById('logoutBtn')?.addEventListener('click', () => auth.signOut());
   document.getElementById('addEntryForm')?.addEventListener('submit', handleAddEntry);
   document.getElementById('transPeriodForm')?.addEventListener('submit', handleFilterTransByPeriod);
@@ -414,4 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('.quick-btn-row')?.addEventListener('click', handleQuickPeriodFilter);
   document.getElementById('fromDate')?.addEventListener('change', renderDashboard);
   document.getElementById('toDate')?.addEventListener('change', renderDashboard);
+
+  // 마지막으로 초기 탭 로드
+  handleInitialTabAndHash();
 });
